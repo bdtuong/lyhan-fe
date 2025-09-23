@@ -86,7 +86,7 @@ export async function uploadAvatar(userId: string, file: File) {
   const formData = new FormData()
   formData.append("avatar", file)
 
-  const res = await fetch(`http://localhost:8017/v1/Auth/avatar/${userId}`, {
+  const res = await fetch(`${API_URL}/v1/Auth/avatar/${userId}`, {
     method: "PUT",
     body: formData,
   })
