@@ -2,9 +2,28 @@
 
 import Atropos from "atropos/react"
 import "atropos/css"
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ChevronDown } from "lucide-react"
 
+/* --------- chỉ báo mobile --------- */
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    // OR trong matchMedia dùng dấu phẩy
+    const mq = window.matchMedia("(max-width: 768px), (pointer: coarse)")
+    const update = () => setIsMobile(mq.matches)
+    update()
+    if (mq.addEventListener) mq.addEventListener("change", update)
+    else mq.addListener(update)
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener("change", update)
+      else mq.removeListener(update)
+    }
+  }, [])
+  return isMobile
+}
+
+/* --------- lớp bong bóng --------- */
 function BubbleLayer({ zIndex }: { zIndex: number }) {
   const bubbleColors = ["#9ee8ff", "#66d1ff", "#2b82d9"]
 
@@ -44,12 +63,37 @@ function BubbleLayer({ zIndex }: { zIndex: number }) {
   )
 }
 
+/* --------- wrapper: desktop => Atropos, mobile => div tĩnh --------- */
+function ParallaxFrame({ children }: { children: React.ReactNode }) {
+  const isMobile = useIsMobile()
+  const commonClass =
+    "relative z-10 w-full max-w-5xl h-[65vh] overflow-hidden rounded-[28px] atropos-custom"
+
+  if (isMobile) {
+    // Mobile: không khởi tạo Atropos để tối ưu hiệu năng & tránh hiệu ứng tilt
+    return <div className={commonClass}>{children}</div>
+  }
+
+  // Desktop: dùng Atropos như bình thường
+  return (
+    <Atropos
+      className={commonClass}
+      rotateXMax={15}
+      rotateYMax={15}
+      shadow
+      highlight
+      activeOffset={40}
+      shadowScale={1.2}
+    >
+      {children}
+    </Atropos>
+  )
+}
+
 export function HeroSection() {
   const handleScroll = () => {
     const nextSection = document.getElementById("next-section")
-    if (nextSection) {
-      nextSection.scrollIntoView({ behavior: "smooth" })
-    }
+    if (nextSection) nextSection.scrollIntoView({ behavior: "smooth" })
   }
 
   return (
@@ -57,15 +101,7 @@ export function HeroSection() {
       {/* Bubble layer BEHIND */}
       <BubbleLayer zIndex={0} />
 
-      <Atropos
-        className="relative z-10 w-full max-w-5xl h-[65vh] overflow-hidden rounded-[28px] atropos-custom"
-        rotateXMax={15}
-        rotateYMax={15}
-        shadow
-        highlight
-        activeOffset={40}
-        shadowScale={1.2}
-      >
+      <ParallaxFrame>
         {/* Background layer */}
         <div className="absolute inset-0" data-atropos-offset="0">
           <img
@@ -89,7 +125,7 @@ export function HeroSection() {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 text-center px-8 py-16">
+        <div className="relative z-10 text-center px-8 py-4">
           <div data-atropos-offset="12" className="flex justify-center">
             <img
               src="/lyhan-wordmark.png"
@@ -98,7 +134,7 @@ export function HeroSection() {
             />
           </div>
         </div>
-      </Atropos>
+      </ParallaxFrame>
 
       {/* Bubble layer FRONT */}
       <BubbleLayer zIndex={20} />
@@ -152,11 +188,11 @@ export function HeroSection() {
 
         .atropos-custom {
           --atropos-shadow: 50px;
-          --atropos-shadow-color: rgba(30, 64, 175, 0.6); /* xanh dương mờ */
+          --atropos-shadow-color: rgba(30, 64, 175, 0.6);
           transition: --atropos-shadow-color 0.3s ease;
         }
         .atropos-custom:hover {
-          --atropos-shadow-color: rgba(30, 64, 175, 0.9); /* đậm hơn khi hover */
+          --atropos-shadow-color: rgba(30, 64, 175, 0.9);
         }
       `}</style>
     </section>

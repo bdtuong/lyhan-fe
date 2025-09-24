@@ -27,23 +27,46 @@ function loadYouTubeApi(): Promise<void> {
   })
 }
 
-// Nấc kích thước theo chiều rộng (px). Chiều cao auto theo 16:9.
-const SIZE_STEPS = [320, 420, 560, 720] as const
+// Responsive size steps - mobile friendly
+const MOBILE_SIZES = [280, 320, 360] as const
+const DESKTOP_SIZES = [320, 420, 560, 720] as const
 const POS_KEY = "lyhan_mp_pos"
 const SIZE_KEY = "lyhan_mp_size"
+const VISIBLE_KEY = "lyhan_mp_visible"
 
 type Pos = { x: number; y: number }
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false)
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+  
+  return isMobile
+}
+
 export function MusicPlayer() {
   const { currentSong, isPlaying, nextSong, previousSong, playlist, playSong, setIsPlaying } = useMusicPlayer()
+  const isMobile = useIsMobile()
 
-  // --- Visible (tắt/mở) ---
-  const [visible, setVisible] = useState(true)
+  // --- Visible (mặc định đóng) ---
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === "undefined") return false
+    const saved = localStorage.getItem(VISIBLE_KEY)
+    return saved === "true" // Mặc định false nếu chưa có trong localStorage
+  })
 
   // --- Drag state ---
   const outerRef = useRef<HTMLDivElement>(null)
   const handleRef = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState<Pos>({ x: 24, y: 24 })
+  const [pos, setPos] = useState<Pos>({ x: 16, y: 16 })
   const dragStateRef = useRef<{
     startX: number
     startY: number
@@ -54,12 +77,14 @@ export function MusicPlayer() {
     dragging: boolean
   } | null>(null)
 
-  // --- Size / zoom ---
+  // --- Size / zoom với responsive ---
+  const SIZE_STEPS = isMobile ? MOBILE_SIZES : DESKTOP_SIZES
   const [sizeIndex, setSizeIndex] = useState<number>(() => {
-    if (typeof window === "undefined") return 1
+    if (typeof window === "undefined") return isMobile ? 1 : 1
     const saved = Number(localStorage.getItem(SIZE_KEY))
     return Number.isFinite(saved) ? Math.min(Math.max(saved, 0), SIZE_STEPS.length - 1) : 1
   })
+  
   const width = SIZE_STEPS[sizeIndex]
   const canZoomOut = sizeIndex > 0
   const canZoomIn = sizeIndex < SIZE_STEPS.length - 1
@@ -70,24 +95,56 @@ export function MusicPlayer() {
   const embedId = currentSong?.youtubeId
   const title = currentSong?.title ?? "Chưa chọn bài hát"
 
-  // Khởi tạo vị trí ban đầu
+  // Lưu trạng thái visible
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(VISIBLE_KEY, String(visible))
+    }
+  }, [visible])
+
+  // Khởi tạo vị trí ban đầu với responsive
   useEffect(() => {
     if (typeof window === "undefined") return
     const saved = localStorage.getItem(POS_KEY)
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as Pos
-        setPos(parsed)
+        // Đảm bảo vị trí hợp lệ với kích thước hiện tại
+        const estHeight = width * 9 / 16 + (isMobile ? 160 : 140)
+        const maxX = Math.max(0, window.innerWidth - width)
+        const maxY = Math.max(0, window.innerHeight - estHeight)
+        setPos({
+          x: Math.min(parsed.x, maxX),
+          y: Math.min(parsed.y, maxY)
+        })
         return
       } catch {}
     }
-    const estHeight = width * 9 / 16 + 120
-    setPos({
-      x: Math.max(16, window.innerWidth - width - 16),
-      y: Math.max(16, window.innerHeight - estHeight - 16)
-    })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    
+    // Vị trí mặc định
+    const estHeight = width * 9 / 16 + (isMobile ? 160 : 140)
+    if (isMobile) {
+      // Mobile: đặt ở giữa màn hình
+      setPos({
+        x: Math.max(8, (window.innerWidth - width) / 2),
+        y: Math.max(8, (window.innerHeight - estHeight) / 2)
+      })
+    } else {
+      // Desktop: góc phải dưới
+      setPos({
+        x: Math.max(16, window.innerWidth - width - 16),
+        y: Math.max(16, window.innerHeight - estHeight - 16)
+      })
+    }
+  }, [width, isMobile])
+
+  // Reset size index khi chuyển giữa mobile/desktop
+  useEffect(() => {
+    const maxIndex = SIZE_STEPS.length - 1
+    if (sizeIndex > maxIndex) {
+      setSizeIndex(maxIndex)
+    }
+  }, [SIZE_STEPS.length, sizeIndex])
 
   // Lưu size khi đổi
   useEffect(() => {
@@ -160,52 +217,87 @@ export function MusicPlayer() {
     playSong(rand)
   }
 
-  // --- Drag handlers ---
+  // --- Drag handlers với touch support ---
   useEffect(() => {
     const handleEl = handleRef.current
     if (!handleEl) return
 
-    const onPointerDown = (e: PointerEvent) => {
+    const getEventCoords = (e: PointerEvent | TouchEvent) => {
+      if ('touches' in e) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      }
+      return { x: e.clientX, y: e.clientY }
+    }
+
+    const onStart = (e: PointerEvent | TouchEvent) => {
+      e.preventDefault()
       if (!outerRef.current) return
+      
+      const coords = getEventCoords(e)
       const rect = outerRef.current.getBoundingClientRect()
+      
       dragStateRef.current = {
-        startX: e.clientX,
-        startY: e.clientY,
+        startX: coords.x,
+        startY: coords.y,
         originX: rect.left,
         originY: rect.top,
         maxX: window.innerWidth - rect.width,
         maxY: window.innerHeight - rect.height,
         dragging: true
-      };
-      (e.target as Element).setPointerCapture?.(e.pointerId)
-      window.addEventListener("pointermove", onPointerMove)
-      window.addEventListener("pointerup", onPointerUp)
+      }
+      
+      if ('setPointerCapture' in e.target!) {
+        ;(e.target as Element).setPointerCapture((e as PointerEvent).pointerId)
+      }
+      
       document.body.style.userSelect = "none"
       document.body.style.cursor = "grabbing"
+      document.body.style.touchAction = "none"
     }
 
-    const onPointerMove = (e: PointerEvent) => {
+    const onMove = (e: PointerEvent | TouchEvent) => {
+      e.preventDefault()
       const st = dragStateRef.current
       if (!st?.dragging) return
-      const dx = e.clientX - st.startX
-      const dy = e.clientY - st.startY
-      const nextX = Math.min(Math.max(st.originX + dx, 0), st.maxX)
-      const nextY = Math.min(Math.max(st.originY + dy, 0), st.maxY)
+      
+      const coords = getEventCoords(e)
+      const dx = coords.x - st.startX
+      const dy = coords.y - st.startY
+      const nextX = Math.min(Math.max(st.originX + dx, 8), st.maxX - 8)
+      const nextY = Math.min(Math.max(st.originY + dy, 8), st.maxY - 8)
       setPos({ x: nextX, y: nextY })
     }
 
-    const onPointerUp = (e: PointerEvent) => {
+    const onEnd = (e: PointerEvent | TouchEvent) => {
+      if (!dragStateRef.current?.dragging) return
+      
       dragStateRef.current = null
-      window.removeEventListener("pointermove", onPointerMove)
-      window.removeEventListener("pointerup", onPointerUp)
       document.body.style.userSelect = ""
       document.body.style.cursor = ""
-      ;(e.target as Element).releasePointerCapture?.(e.pointerId)
+      document.body.style.touchAction = ""
+      
+      if ('releasePointerCapture' in e.target! && 'pointerId' in e) {
+        ;(e.target as Element).releasePointerCapture((e as PointerEvent).pointerId)
+      }
     }
 
-    handleEl.addEventListener("pointerdown", onPointerDown)
+    // Pointer events
+    handleEl.addEventListener("pointerdown", onStart)
+    document.addEventListener("pointermove", onMove)
+    document.addEventListener("pointerup", onEnd)
+    
+    // Touch events for better mobile support
+    handleEl.addEventListener("touchstart", onStart, { passive: false })
+    document.addEventListener("touchmove", onMove, { passive: false })
+    document.addEventListener("touchend", onEnd)
+
     return () => {
-      handleEl.removeEventListener("pointerdown", onPointerDown)
+      handleEl.removeEventListener("pointerdown", onStart)
+      document.removeEventListener("pointermove", onMove)
+      document.removeEventListener("pointerup", onEnd)
+      handleEl.removeEventListener("touchstart", onStart)
+      document.removeEventListener("touchmove", onMove)
+      document.removeEventListener("touchend", onEnd)
     }
   }, [])
 
@@ -219,10 +311,15 @@ export function MusicPlayer() {
       {!visible && (
         <button
           onClick={() => setVisible(true)}
-          className="fixed bottom-4 right-4 z-[9999] rounded-full bg-blue-600 text-white px-4 h-11 shadow-lg hover:bg-blue-500 flex items-center gap-2"
+          className={`fixed z-[9999] rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-500 flex items-center gap-2 transition-all
+            ${isMobile 
+              ? 'bottom-4 right-4 px-3 h-12 text-sm' 
+              : 'bottom-4 right-4 px-4 h-11'
+            }`}
           aria-label="Mở trình phát"
         >
-          <Music className="w-4 h-4" /> Mở player
+          <Music className="w-4 h-4" /> 
+          {isMobile ? 'Player' : 'Mở player'}
         </button>
       )}
 
@@ -231,67 +328,98 @@ export function MusicPlayer() {
         className={`fixed z-[9999] transition-opacity ${
           visible ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
-        style={{ left: pos.x, top: pos.y, width }}
+        style={{ 
+          left: pos.x, 
+          top: pos.y, 
+          width,
+          maxWidth: isMobile ? 'calc(100vw - 16px)' : 'none'
+        }}
       >
         <Card className="border border-blue-500/20 bg-gradient-to-r from-[#050b1a]/95 to-[#0b2245]/95 text-white backdrop-blur-md shadow-[0_10px_40px_rgba(0,0,0,0.6)]">
-          <CardContent className="p-3 sm:p-4">
-            {/* Header */}
-            <div className="flex items-center gap-2 mb-3">
+          <CardContent className={isMobile ? "p-2" : "p-3 sm:p-4"}>
+            {/* Header - Control Bar */}
+            <div className={`flex items-center justify-between ${isMobile ? 'mb-2' : 'mb-3'}`}>
               <div
                 ref={handleRef}
-                className="flex items-center gap-2 px-2 py-1 rounded-lg bg-blue-500/10 ring-1 ring-blue-500/30 cursor-grab active:cursor-grabbing select-none"
+                className={`flex items-center gap-1 rounded-lg bg-blue-500/10 ring-1 ring-blue-500/30 cursor-grab active:cursor-grabbing select-none touch-none
+                  ${isMobile ? 'px-1.5 py-1' : 'px-2 py-1'}`}
               >
                 <Move className="w-4 h-4 text-blue-300" />
-                <span className="text-xs text-blue-200/80 hidden sm:block">Kéo để di chuyển</span>
+                {!isMobile && (
+                  <span className="text-xs text-blue-200/80 hidden sm:block">Kéo để di chuyển</span>
+                )}
               </div>
-              <div className="min-w-0 ml-1">
-                <h3 className="font-semibold leading-tight truncate max-w-[220px] sm:max-w-[360px]">
-                  {title}
-                </h3>
-                <p className="text-xs text-blue-200/70 truncate">
-                  {currentSong ? currentSong.artist : "Chọn bài từ playlist hoặc phát ngẫu nhiên"}
-                </p>
-              </div>
-              <div className="ml-auto flex items-center gap-1">
+              
+              <div className="flex items-center gap-1">
                 <Button
                   size="icon"
                   variant="outline"
                   onClick={zoomOut}
                   disabled={!canZoomOut}
-                  className="w-9 h-9 bg-transparent border-blue-500/30 text-blue-200 hover:bg-blue-900/30 disabled:opacity-40"
+                  className={`bg-transparent border-blue-500/30 text-blue-200 hover:bg-blue-900/30 disabled:opacity-40
+                    ${isMobile ? 'w-7 h-7' : 'w-9 h-9'}`}
                 >
-                  <Minus className="w-4 h-4" />
+                  <Minus className={isMobile ? "w-3 h-3" : "w-4 h-4"} />
                 </Button>
                 <Button
                   size="icon"
                   variant="outline"
                   onClick={zoomIn}
                   disabled={!canZoomIn}
-                  className="w-9 h-9 bg-transparent border-blue-500/30 text-blue-200 hover:bg-blue-900/30 disabled:opacity-40"
+                  className={`bg-transparent border-blue-500/30 text-blue-200 hover:bg-blue-900/30 disabled:opacity-40
+                    ${isMobile ? 'w-7 h-7' : 'w-9 h-9'}`}
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className={isMobile ? "w-3 h-3" : "w-4 h-4"} />
                 </Button>
                 <Button
                   size="icon"
                   variant="outline"
                   onClick={() => setVisible(false)}
-                  className="w-9 h-9 bg-transparent border-blue-500/30 text-blue-200 hover:bg-blue-900/30"
+                  className={`bg-transparent border-blue-500/30 text-blue-200 hover:bg-blue-900/30
+                    ${isMobile ? 'w-7 h-7' : 'w-9 h-9'}`}
                 >
-                  <X className="w-4 h-4" />
+                  <X className={isMobile ? "w-3 h-3" : "w-4 h-4"} />
                 </Button>
               </div>
             </div>
 
+            {/* Song Info - Dedicated Row */}
+            <div className={`text-center ${isMobile ? 'mb-2' : 'mb-3'}`}>
+              <div className="min-h-0">
+                <h3 className={`font-semibold leading-tight text-white break-words
+                  ${isMobile ? 'text-sm line-clamp-2' : 'text-base line-clamp-2'}`}
+                  style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    wordBreak: 'break-word',
+                    hyphens: 'auto'
+                  }}
+                  title={title}
+                >
+                  {title}
+                </h3>
+                <p className={`text-blue-200/70 mt-1 truncate
+                  ${isMobile ? 'text-[11px]' : 'text-xs'}`}
+                  title={currentSong ? currentSong.artist : "Chọn bài từ playlist hoặc phát ngẫu nhiên"}
+                >
+                  {currentSong ? currentSong.artist : "Chọn bài từ playlist hoặc phát ngẫu nhiên"}
+                </p>
+              </div>
+            </div>
+
             {/* Controls */}
-            <div className="flex items-center justify-end gap-2 mb-3">
+            <div className={`flex items-center justify-center gap-2 ${isMobile ? 'mb-2' : 'mb-3'}`}>
               <Button
                 size="icon"
                 variant="outline"
                 onClick={previousSong}
-                className="w-9 h-9 p-0 bg-transparent border-blue-500/30 text-blue-200 hover:bg-blue-900/30"
+                className={`p-0 bg-transparent border-blue-500/30 text-blue-200 hover:bg-blue-900/30
+                  ${isMobile ? 'w-8 h-8' : 'w-9 h-9'}`}
                 disabled={!currentSong}
               >
-                <SkipBack className="w-4 h-4" />
+                <SkipBack className={isMobile ? "w-3 h-3" : "w-4 h-4"} />
               </Button>
 
               {currentSong ? (
@@ -299,17 +427,23 @@ export function MusicPlayer() {
                   size="icon"
                   variant="outline"
                   onClick={() => setIsPlaying(!isPlaying)}
-                  className="w-10 h-10 p-0 bg-transparent border-blue-500/30 text-blue-100 hover:bg-blue-900/30"
+                  className={`p-0 bg-transparent border-blue-500/30 text-blue-100 hover:bg-blue-900/30
+                    ${isMobile ? 'w-9 h-9' : 'w-10 h-10'}`}
                 >
-                  {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                  {isPlaying ? 
+                    <Pause className={isMobile ? "w-4 h-4" : "w-5 h-5"} /> : 
+                    <Play className={isMobile ? "w-4 h-4" : "w-5 h-5"} />
+                  }
                 </Button>
               ) : (
                 <Button
                   size="sm"
                   onClick={playRandom}
-                  className="bg-blue-600 hover:bg-blue-500 h-9"
+                  className={`bg-blue-600 hover:bg-blue-500 flex items-center gap-1
+                    ${isMobile ? 'h-8 px-2 text-xs' : 'h-9'}`}
                 >
-                  <Shuffle className="w-4 h-4 mr-1" /> Ngẫu nhiên
+                  <Shuffle className={isMobile ? "w-3 h-3" : "w-4 h-4"} /> 
+                  {isMobile ? 'Random' : 'Ngẫu nhiên'}
                 </Button>
               )}
 
@@ -317,21 +451,30 @@ export function MusicPlayer() {
                 size="icon"
                 variant="outline"
                 onClick={nextSong}
-                className="w-9 h-9 p-0 bg-transparent border-blue-500/30 text-blue-200 hover:bg-blue-900/30"
+                className={`p-0 bg-transparent border-blue-500/30 text-blue-200 hover:bg-blue-900/30
+                  ${isMobile ? 'w-8 h-8' : 'w-9 h-9'}`}
                 disabled={!currentSong}
               >
-                <SkipForward className="w-4 h-4" />
+                <SkipForward className={isMobile ? "w-3 h-3" : "w-4 h-4"} />
               </Button>
             </div>
 
             {/* Player area */}
-            <div className="relative w-full rounded-xl overflow-hidden ring-1 ring-blue-500/20">
+            <div className={`relative w-full rounded-xl overflow-hidden ring-1 ring-blue-500/20
+              ${isMobile ? 'rounded-lg' : 'rounded-xl'}`}>
               <div className="relative w-full pt-[56.25%]">
                 {!currentSong ? (
-                  <div className="absolute inset-0 flex items-center justify-center text-blue-200/80">
-                    <p className="mb-2">Chưa có bài nào được chọn</p>
-                    <Button onClick={playRandom} className="bg-blue-600 hover:bg-blue-500">
-                      <Shuffle className="w-4 h-4 mr-2" /> Phát ngẫu nhiên
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-blue-200/80 p-4">
+                    <p className={`text-center ${isMobile ? 'text-xs mb-2' : 'mb-2'}`}>
+                      Chưa có bài nào được chọn
+                    </p>
+                    <Button 
+                      onClick={playRandom} 
+                      className={`bg-blue-600 hover:bg-blue-500 flex items-center gap-1
+                        ${isMobile ? 'text-xs px-2 h-7' : ''}`}
+                    >
+                      <Shuffle className={isMobile ? "w-3 h-3" : "w-4 h-4"} /> 
+                      Phát ngẫu nhiên
                     </Button>
                   </div>
                 ) : (
@@ -349,7 +492,8 @@ export function MusicPlayer() {
               </div>
             </div>
 
-            <div className="mt-3 text-[11px] text-blue-200/60">
+            <div className={`text-blue-200/60 text-center
+              ${isMobile ? 'mt-2 text-[9px]' : 'mt-3 text-[11px]'}`}>
               Đang phát từ YouTube • quảng cáo (nếu có) vẫn do YouTube chèn.
             </div>
           </CardContent>

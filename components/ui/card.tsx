@@ -1,5 +1,4 @@
 import * as React from 'react'
-
 import { cn } from '@/lib/utils'
 
 function Card({ className, ...props }: React.ComponentProps<'div'>) {
@@ -7,16 +6,16 @@ function Card({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="card"
       className={cn(
-        // Nền trong suốt + border trắng mờ + chữ trắng
-        'bg-white/5 backdrop-blur-sm border border-white/20 text-white',
-        'flex flex-col gap-6 rounded-xl py-6 shadow-sm',
+        // Glass effect với nền đen + viền xanh dương nhẹ + chữ trắng
+        'bg-black/40 backdrop-blur-sm border border-blue-500/50 text-white',
+        'flex flex-col gap-6 rounded-xl py-6 shadow-lg shadow-blue-500/5',
+        'hover:border-blue-500/30 transition-all duration-200',
         className,
       )}
       {...props}
     />
   )
 }
-
 
 function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
@@ -35,7 +34,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-title"
-      className={cn('leading-none font-semibold', className)}
+      className={cn('leading-none font-semibold text-white', className)}
       {...props}
     />
   )
@@ -45,7 +44,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-description"
-      className={cn('text-muted-foreground text-sm', className)}
+      className={cn('text-neutral-300 text-sm', className)}
       {...props}
     />
   )

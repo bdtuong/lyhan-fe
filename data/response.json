@@ -5,10 +5,10 @@
       "Bạn sẽ bắt gặp những câu chuyện tình yêu vừa đẹp vừa đau, cùng cách kể chuyện giàu hình ảnh – nghe như đang xem một bộ phim tâm lý đen tối.",
       "Dù phần lớn ca khúc chìm trong gam màu trầm, đôi khi Lyhan vẫn gieo một đốm sáng lạc quan rất dịu – đủ để người nghe thấy mình được vỗ về."
     ],
-    "hot": "Gần đây, 'Nhân Danh Tình Yêu' (bản Việt) và 'A NEW HARLEY QUINN' (bản gốc) thường được nhắc tới nhiều – mạnh mẽ, tối và rất 'điện ảnh'.",
+    "hot": "Gần đây, 'Nhân Danh Tình Yêu' (bản Việt) và 'A NEW HARLEY QUINN' (bản gốc) thường được nhắc tới nhiều – mạnh mẽ, tối và rất 'điện ảnh'. Sau Em xinh Say Hi, Lyhan cũng đã mang đến cho khán giả ca khúc 'Rơi Tự Do' vô cùng cảm xúc và da diết.",
     "best": "Nếu bạn muốn một ca khúc dễ chạm cảm xúc mà vẫn tích cực, hãy thử 'Tình Yêu Ngủ Quên' – ấm áp và nhiều hy vọng.",
-    "hotSongIds": [3, 2],
-    "bestSongIds": [5]
+    "hotSongIds": [1, 3, 2],
+    "bestSongIds": [1, 5]
     },
   "songs": [
     {
@@ -19,7 +19,7 @@
       "duration": "3:45",
       "youtubeId": "c7TLmvJQsB8",
       "mood": ["buồn", "tan vỡ", "cô đơn", "mất kiểm soát"],
-      "keywords": ["buồn", "chia tay", "tan vỡ", "mệt mỏi", "bất lực", "đau", "đổ vỡ", "cạn sức"],
+      "keywords": ["buồn", "chia tay", "tan vỡ", "mệt mỏi", "bất lực", "đau", "đổ vỡ", "cạn sức", "rơi tự do"],
       "description": "Ballad buồn, man mác và buông xuôi – như rơi khỏi tay chính mình.",
       "meaning": "Ẩn dụ cho việc đánh rơi kiểm soát cảm xúc, trượt dài trong nỗi đau.",
       "responses": [
@@ -36,7 +36,7 @@
       "duration": "4:12",
       "youtubeId": "BtNcCtN2n8c",
       "mood": ["mạnh mẽ", "nổi loạn", "u tối"],
-      "keywords": ["nổi loạn", "cuồng si", "cực đoan", "harley", "điên loạn", "đốt cháy"],
+      "keywords": ["nổi loạn", "cuồng si", "cực đoan", "harley", "điên loạn", "đốt cháy","A NEW HARLEY QUINN"],
       "description": "Ca khúc dùng hình tượng Harley Quinn để khắc họa tình yêu cực đoan, nổi loạn.",
       "meaning": "Vẻ đẹp song hành với hủy diệt – một ám ảnh rất quyến rũ.",
       "responses": [
@@ -53,7 +53,7 @@
       "duration": "3:28",
       "youtubeId": "n0J9WfZprXg",
       "mood": ["u ám", "bi kịch", "độc hại"],
-      "keywords": ["đau khổ", "độc hại", "tổn thương", "mù quáng", "biện minh", "bế tắc"],
+      "keywords": ["đau khổ", "độc hại", "tổn thương", "mù quáng", "biện minh", "bế tắc","Nhân Danh Tình Yêu"],
       "description": "Tình yêu độc hại – mọi tổn thương đều được biện minh bằng hai chữ 'vì yêu'.",
       "meaning": "Một tấm gương cho sự mù quáng – nhận ra để tự cứu mình.",
       "responses": [
@@ -70,7 +70,7 @@
       "duration": "4:01",
       "youtubeId": "Vr0Y-aft5n4",
       "mood": ["ma mị", "tối tăm", "kỳ bí"],
-      "keywords": ["lạc lõng", "bóng tối", "nguy hiểm", "tiếng gọi", "khoảng trống"],
+      "keywords": ["lạc lõng", "bóng tối", "nguy hiểm", "tiếng gọi", "khoảng trống","Welcome home"],
       "description": "Lời mời quay về – nhưng về ký ức, về bóng tối hay về nơi an toàn thì không rõ.",
       "meaning": "‘Home’ ở đây vừa an ủi vừa nguy hiểm – một ranh giới mong manh.",
       "responses": [
@@ -87,7 +87,7 @@
       "duration": "3:55",
       "youtubeId": "eukA1NGSM5w",
       "mood": ["tươi sáng", "ngọt ngào", "tích cực"],
-      "keywords": ["hạnh phúc", "tươi sáng", "yêu đời", "ngọt ngào", "lạc quan", "hy vọng"],
+      "keywords": ["hạnh phúc", "tươi sáng", "yêu đời", "ngọt ngào", "lạc quan", "hy vọng", "Tình Yêu Ngủ Quên"],
       "description": "Một tình yêu tưởng ngủ quên, nay được đánh thức rực rỡ.",
       "meaning": "Đốm sáng hiếm hoi trong thế giới u tối của Lyhan.",
       "responses": [
@@ -104,7 +104,7 @@
       "duration": "3:50",
       "youtubeId": "iQoNKnX5dG0",
       "mood": ["hoài niệm", "ngây thơ", "day dứt"],
-      "keywords": ["tình đầu", "học trò", "đơn phương", "ngây thơ", "hoài niệm", "vấn vương"],
+      "keywords": ["tình đầu", "học trò", "đơn phương", "ngây thơ", "hoài niệm", "vấn vương","Sao Cô Ấy Không Yêu Tôi"],
       "description": "Tình cảm học trò không được đáp lại – nhẹ mà ám.",
       "meaning": "Tiếng lòng trong sáng của tuổi trẻ, khi yêu chưa cần lý do.",
       "responses": [
