@@ -10,18 +10,21 @@ import { toggleLike } from "@/services/post.services"
 import { CommentModal } from "./CommentModal"
 import { Lightbox, LightboxImage } from "@/components/lightbox"
 
-export function PostItem({ post }: { post: any }) {
+type Props = {
+  post: any
+  actionsSlot?: React.ReactNode // ⭐ nơi nhét nút 3 chấm từ ngoài vào
+}
+
+export function PostItem({ post, actionsSlot }: Props) {
   const { userInfo } = useUserInfo(post.userID)
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : ""
   const decoded = token ? decodeJWT(token) : null
   const userId = decoded?.id
 
-  // local state để re-render
   const [likes, setLikes] = useState<number>(post.likes?.length || 0)
   const [liked, setLiked] = useState<boolean>(post.likes?.includes(userId) || false)
   const [showModal, setShowModal] = useState(false)
 
-  // lightbox state
   const [selectedImage, setSelectedImage] = useState<LightboxImage | null>(null)
 
   const handleToggleLike = async () => {
@@ -35,7 +38,6 @@ export function PostItem({ post }: { post: any }) {
     }
   }
 
-  // lấy danh sách ảnh (ưu tiên images[], fallback imageUrl)
   const images: string[] =
     post.images && post.images.length > 0
       ? post.images
@@ -43,43 +45,45 @@ export function PostItem({ post }: { post: any }) {
       ? [post.imageUrl]
       : []
 
-  // hashtags cho Lightbox
   const hashtags: string[] = Array.isArray(post.hashtags) ? post.hashtags : ["Post"]
-
-  // build mảng LightboxImage cho Lightbox
   const lightboxImages: LightboxImage[] = images.map((src, idx) => ({
     id: idx,
     src,
     alt: `post-${idx}`,
     content: post.content || `Ảnh ${idx + 1}`,
-    category: hashtags,
+    category: hashtags
   }))
 
   return (
     <>
-      <Card>
+      <Card className="bg-slate-800/70 border-slate-700/60">
         <CardContent className="p-4">
           {/* Header */}
-          <div className="flex items-center gap-3 mb-3">
-            <Link href={`/profile/${post.userID}`} className="flex items-center gap-3">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <Link href={`/profile/${post.userID}`} className="flex items-center gap-3 min-w-0">
               <img
                 src={userInfo?.avatar || "/avatars/default.png"}
                 alt={userInfo?.username || "user"}
-                className="w-10 h-10 rounded-full"
+                className="w-10 h-10 rounded-full object-cover"
               />
-              <div>
-                <p className="font-semibold hover:underline">
+              <div className="min-w-0">
+                <p className="font-semibold hover:underline truncate">
                   {userInfo?.username || "Ẩn danh"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(post.createdAt).toLocaleString("vi-VN")}
+                  {post.createdAt ? new Date(post.createdAt).toLocaleString("vi-VN") : ""}
                 </p>
               </div>
             </Link>
+
+            {/* ⭐ slot cho menu ngoài truyền vào */}
+            {actionsSlot}
           </div>
 
           {/* Content */}
-          <div className="mb-3 whitespace-pre-line text-sm">{post.content}</div>
+          {post.content && (
+            <div className="mb-3 whitespace-pre-line text-sm break-words">{post.content}</div>
+          )}
 
           {/* Images */}
           {images.length > 0 && (
@@ -201,7 +205,7 @@ export function PostItem({ post }: { post: any }) {
         <CommentModal postId={post._id} onClose={() => setShowModal(false)} />
       )}
 
-      {/* Lightbox Preview */}
+      {/* Lightbox */}
       {selectedImage && (
         <Lightbox
           image={selectedImage}

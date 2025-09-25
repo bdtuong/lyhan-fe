@@ -56,12 +56,16 @@ export async function createPost(
 
 // 🟢 Lấy posts theo user
 export async function getUserPosts(userId: string, token: string, page = 1, pageSize = 9) {
-  const res = await fetch(`${API_URL}?userId=${userId}&page=${page}&pageSize=${pageSize}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
+  const res = await fetch(
+    `${API_URL}/user/${encodeURIComponent(userId)}?page=${page}&pageSize=${pageSize}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  )
   if (!res.ok) throw new Error("❌ Lỗi fetch user posts")
   return res.json()
 }
+
 
 // 🟢 Toggle like/unlike
 export async function toggleLike(postId: string, userId: string, token: string) {
@@ -79,3 +83,52 @@ export async function searchPosts(q: string) {
   if (!res.ok) throw new Error("❌ Lỗi search posts")
   return res.json()
 }
+
+
+export async function deletePost(postId: string, token: string) {
+  const res = await fetch(`${API_URL}/delete-post/${postId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!res.ok) {
+    throw new Error("❌ Lỗi delete post")
+  }
+
+  return res.json()
+}
+
+export async function updatePost(
+  postId: string,
+  token: string,
+  data: {
+    content?: string
+    images?: File[]
+  }
+) {
+  const formData = new FormData()
+
+  if (data.content) formData.append("content", data.content)
+
+  if (data.images && data.images.length > 0) {
+    data.images.forEach((img) => {
+      formData.append("images", img)
+    })
+  }
+
+  const res = await fetch(`${API_URL}/update-post/${postId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.message || "❌ Lỗi update post")
+  return json
+}
+
+
