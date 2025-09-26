@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { X, ChevronLeft, ChevronRight } from "lucide-react"
+import { X, ChevronLeft, ChevronRight, Download } from "lucide-react"
 
 export interface LightboxImage {
   id: string | number
@@ -73,6 +73,19 @@ export function Lightbox({ image, images, onClose, onNext, onPrevious }: Lightbo
       >
         <X className="w-6 h-6" />
       </Button>
+
+      {/* Download Button */}
+      <a
+        href={image.src}
+        download={`gallery-image-${image.id}.jpg`}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        className="absolute top-4 right-16 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition"
+        title="Tải ảnh về"
+      >
+        <Download className="w-5 h-5" />
+      </a>
 
       {/* Navigation Buttons */}
       {!isFirst && (
