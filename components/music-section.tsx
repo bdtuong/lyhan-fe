@@ -85,30 +85,30 @@ export function MusicSection() {
         {/* Các box nhỏ */}
         <div className="w-full md:w-4/5 grid grid-cols-1 gap-4">
           {songs.map((song) => (
-            <Link key={song.title} href={song.href}>
-              <LiquidGlass
-                className="group relative p-4 flex items-center justify-between cursor-pointer h-full"
-                cornerRadius={16}
-                blurAmount={0.1}
-                displacementScale={25}
-                elasticity={0.15}
-              >
-                {/* Thumbnail + title */}
-                <div className="flex items-center gap-4">
-                  <img
-                    src={song.thumbnail}
-                    alt={song.title}
-                    className="w-12 h-12 md:w-14 md:h-14 rounded-md object-cover"
-                  />
-                  <span className="text-base md:text-lg font-medium">{song.title}</span>
-                </div>
-
-                {/* Play icon */}
-                <PlayCircle className="w-6 h-6 md:w-8 md:h-8 text-white/70 opacity-70 group-hover:text-white group-hover:opacity-100 transition-colors duration-300" />
-              </LiquidGlass>
-            </Link>
+            <LiquidGlass
+              key={song.title}
+              className="group relative p-4 flex items-center justify-center cursor-pointer h-full"
+              cornerRadius={16}
+              blurAmount={0.1}
+              displacementScale={25}
+              elasticity={0.15}
+            >
+              {/* Thumbnail + title ngang nhau, ở giữa */}
+              <div className="flex items-center gap-4">
+                <img
+                  src={song.thumbnail}
+                  alt={song.title}
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-md object-cover"
+                />
+                <span className="text-base md:text-lg font-medium">
+                  {song.title}
+                </span>
+              </div>
+            </LiquidGlass>
           ))}
         </div>
+
+
       </motion.div>
     </section>
   )

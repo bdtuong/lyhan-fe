@@ -237,11 +237,6 @@ export function FanSocialPage() {
              pb-[env(safe-area-inset-bottom)]"
 >
   <div className="flex justify-around items-center max-w-md mx-auto h-14">
-    <button className="flex flex-col items-center justify-center gap-0.5 text-neutral-200 hover:text-blue-400 transition-colors">
-      <Home className="w-6 h-6" />
-      <span className="text-xs">Home</span>
-    </button>
-
     <button onClick={() => setShowSearch(true)}
       className="flex flex-col items-center justify-center gap-0.5 text-neutral-200 hover:text-blue-400 transition-colors">
       <Search className="w-6 h-6" />
@@ -252,11 +247,6 @@ export function FanSocialPage() {
       className="flex flex-col items-center justify-center gap-0.5 text-neutral-200 hover:text-blue-400 transition-colors">
       <Plus className="w-6 h-6" />
       <span className="text-xs">Create</span>
-    </button>
-
-    <button className="flex flex-col items-center justify-center gap-0.5 text-neutral-200 hover:text-blue-400 transition-colors">
-      <User className="w-6 h-6" />
-      <span className="text-xs">Profile</span>
     </button>
   </div>
 </nav>

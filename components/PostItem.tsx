@@ -56,7 +56,7 @@ export function PostItem({ post, actionsSlot }: Props) {
 
   return (
     <>
-      <Card className="bg-slate-800/70 border-slate-700/60">
+      <Card className="bg-black/90 border-blue-500/20">
         <CardContent className="p-4">
           {/* Header */}
           <div className="flex items-start justify-between gap-3 mb-3">

@@ -20,9 +20,10 @@ export const LyhanLoading: React.FC<LyhanLoadingProps> = ({
   className = "",
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
 
-  const word = "Lyhan"
+  const word = "Lyhan Cute"
 
   const sizeClasses = {
     sm: "text-2xl",
@@ -55,18 +56,34 @@ export const LyhanLoading: React.FC<LyhanLoadingProps> = ({
   }
 
   useEffect(() => {
-    if (currentIndex < word.length) {
-      const timer = setTimeout(() => {
+    let timer: NodeJS.Timeout
+
+    if (!isDeleting && currentIndex < word.length) {
+      // Gõ chữ
+      timer = setTimeout(() => {
         setCurrentIndex((prev) => prev + 1)
       }, speedTiming[speed])
-      return () => clearTimeout(timer)
-    } else {
-      setTimeout(() => {
-        setIsComplete(true)
-        onComplete?.()
-      }, 500)
+    } else if (!isDeleting && currentIndex === word.length) {
+      // Đợi 1s rồi bắt đầu xóa
+      setIsComplete(true)
+      onComplete?.()
+      timer = setTimeout(() => {
+        setIsDeleting(true)
+        setIsComplete(false)
+      }, 1000)
+    } else if (isDeleting && currentIndex > 0) {
+      // Xóa chữ
+      timer = setTimeout(() => {
+        setCurrentIndex((prev) => prev - 1)
+      }, speedTiming[speed] / 2) // xóa nhanh hơn chút
+    } else if (isDeleting && currentIndex === 0) {
+      // Reset và bắt đầu lại
+      setIsDeleting(false)
+      setIsComplete(false)
     }
-  }, [currentIndex, word.length, speed, speedTiming, onComplete])
+
+    return () => clearTimeout(timer)
+  }, [currentIndex, isDeleting, word.length, speed, speedTiming, onComplete])
 
   const visibleText = word.slice(0, currentIndex)
 
@@ -88,7 +105,7 @@ export const LyhanLoading: React.FC<LyhanLoadingProps> = ({
             textShadow: "0 1px 2px rgba(0,0,0,0.1)",
           }}
         >
-          {/* Hiệu ứng chữ viết */}
+          {/* Hiệu ứng chữ gõ/xóa */}
           {visibleText.split("").map((letter, index) => (
             <span
               key={index}
@@ -103,13 +120,13 @@ export const LyhanLoading: React.FC<LyhanLoadingProps> = ({
             </span>
           ))}
 
-          {/* Thêm trái tim xanh 💙 sau khi hoàn tất */}
+          {/* Thêm trái tim 💙 khi gõ xong */}
           {isComplete && (
             <span className="ml-2 animate-pulse text-blue-500">💙</span>
           )}
 
           {/* Con trỏ gõ chữ */}
-          {showCursor && !isComplete && (
+          {showCursor && (
             <span
               className={`
                 inline-block 

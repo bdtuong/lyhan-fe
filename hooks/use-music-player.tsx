@@ -16,12 +16,14 @@ interface MusicPlayerState {
   isPlaying: boolean
   playlist: Song[]
   currentIndex: number
+  visible: boolean
   playSong: (song: Song) => void
   pauseSong: () => void
   nextSong: () => void
   previousSong: () => void
   setPlaylist: (songs: Song[]) => void
   setIsPlaying: (playing: boolean) => void
+  setVisible: (v: boolean) => void
 }
 
 const defaultPlaylist: Song[] = [
@@ -80,11 +82,17 @@ export const useMusicPlayer = create<MusicPlayerState>((set, get) => ({
   isPlaying: false,
   playlist: defaultPlaylist,
   currentIndex: -1,
+  visible: false, // 👈 thêm visible mặc định đóng
 
   playSong: (song: Song) => {
     const { playlist } = get()
     const index = playlist.findIndex((s) => s.id === song.id)
-    set({ currentSong: song, isPlaying: true, currentIndex: index })
+    set({
+      currentSong: song,
+      isPlaying: true,
+      currentIndex: index,
+      visible: true, // 👈 auto mở khi phát bài
+    })
   },
 
   pauseSong: () => set({ isPlaying: false }),
@@ -93,18 +101,29 @@ export const useMusicPlayer = create<MusicPlayerState>((set, get) => ({
     const { playlist, currentIndex } = get()
     const nextIndex = (currentIndex + 1) % playlist.length
     const nextSong = playlist[nextIndex]
-    set({ currentSong: nextSong, currentIndex: nextIndex, isPlaying: true })
+    set({
+      currentSong: nextSong,
+      currentIndex: nextIndex,
+      isPlaying: true,
+      visible: true,
+    })
   },
 
   previousSong: () => {
     const { playlist, currentIndex } = get()
     const prevIndex = currentIndex <= 0 ? playlist.length - 1 : currentIndex - 1
     const prevSong = playlist[prevIndex]
-    set({ currentSong: prevSong, currentIndex: prevIndex, isPlaying: true })
+    set({
+      currentSong: prevSong,
+      currentIndex: prevIndex,
+      isPlaying: true,
+      visible: true,
+    })
   },
 
   setPlaylist: (songs: Song[]) => set({ playlist: songs }),
 
-  // cho phép đồng bộ trạng thái khi user bấm Play/Pause trên khung YouTube
   setIsPlaying: (playing: boolean) => set({ isPlaying: playing }),
+
+  setVisible: (v: boolean) => set({ visible: v }),
 }))

@@ -236,6 +236,15 @@ export function EventsTimeline() {
         />
       )}
 
+      {/* Nếu không có sự kiện nào */}
+      {upcomingEvents.length === 0 && pastEvents.length === 0 && (
+        <div className="text-center text-muted-foreground py-12">
+          <p className="text-lg font-medium">
+            Hiện đang chưa có sự kiện gì cả, các bạn chờ nhé ✨
+          </p>
+        </div>
+      )}
+
       {/* Upcoming Events */}
       {upcomingEvents.length > 0 && (
         <section>

@@ -7,6 +7,7 @@ import { SocialSection } from "@/components/social-section"
 import LoginPage from "../app/auth/login/page"
 import { useAuth } from "@/context/AuthContext"
 import { LyhanLoading } from "@/components/ui/loading"
+import { EventsSection } from "@/components/events-section"
 
 export default function HomePage() {
   const { user, loading } = useAuth()
@@ -45,6 +46,7 @@ export default function HomePage() {
         <MusicSection />
         <GallerySection />
         <SocialSection />
+        <EventsSection />
       </div>
     </div>
   )

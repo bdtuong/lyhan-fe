@@ -38,6 +38,25 @@ export function Lightbox({ image, images, onClose, onNext, onPrevious }: Lightbo
     }
   }
 
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(image.src, { mode: "cors" })
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `gallery-image-${image.id}.jpg` // tên file khi tải
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error("❌ Download error:", err)
+    }
+  }
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
@@ -75,17 +94,18 @@ export function Lightbox({ image, images, onClose, onNext, onPrevious }: Lightbo
       </Button>
 
       {/* Download Button */}
-      <a
-        href={image.src}
-        download={`gallery-image-${image.id}.jpg`}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={(e) => {
+          e.stopPropagation()
+          handleDownload()
+        }}
         className="absolute top-4 right-16 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition"
         title="Tải ảnh về"
       >
         <Download className="w-5 h-5" />
-      </a>
+      </Button>
 
       {/* Navigation Buttons */}
       {!isFirst && (
