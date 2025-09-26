@@ -76,6 +76,14 @@ export default function LoginPage() {
           >
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
+          <p className="mt-4 text-center text-gray-400 text-sm">
+            <span
+              onClick={() => router.push("/auth/forgot-password")}
+              className="text-cyan-300 hover:underline cursor-pointer"
+            >
+              Quên mật khẩu?
+            </span>
+          </p>
         </form>
         <p className="mt-4 text-center text-gray-400 text-sm">
           Chưa có tài khoản?{" "}
