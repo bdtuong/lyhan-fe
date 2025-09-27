@@ -80,3 +80,19 @@ export async function replyComment(
   if (!res.ok) throw new Error("❌ Lỗi reply comment")
   return res.json()
 }
+
+
+export async function getAllComments(boardId: string, token?: string) {
+  let page = 1
+  const pageSize = 50 // tuỳ chỉnh để giảm số lần gọi
+  let all: any[] = []
+
+  while (true) {
+    const data = await getComments(boardId, page, pageSize, token)
+    all = [...all, ...data.comments]
+    if (page >= data.totalPages) break
+    page++
+  }
+
+  return all
+}

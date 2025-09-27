@@ -3,86 +3,20 @@
 import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Play, Pause, Music, Search, Sparkles } from "lucide-react"
+import { Play, Pause, Music } from "lucide-react"
 import { useMusicPlayer } from "@/hooks/use-music-player"
-import { recommendSong, type RecommendationResult } from "@/utils/songRecommender"
 
 export function Playlist() {
   const { playlist, currentSong, isPlaying, playSong, pauseSong } = useMusicPlayer()
-  const [userInput, setUserInput] = useState("")
-  const [rec, setRec] = useState<RecommendationResult | null>(null)
 
   const handlePlayPause = (song: typeof playlist[number]) => {
     if (currentSong?.id === song.id && isPlaying) pauseSong()
     else playSong(song)
   }
 
-  const handleRecommend = () => {
-    if (!userInput.trim()) return
-    const result = recommendSong(userInput.trim())
-    setRec(result)
-  }
-
-  const playRecommended = () => {
-    if (!rec?.song) return
-    const matched = playlist.find((s) => s.youtubeId === rec.song!.youtubeId)
-    if (matched) playSong(matched)
-  }
-
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold text-white">Playlist</h2>
-
-      {/* Ô nhập cảm xúc / câu hỏi */}
-      <Card className="p-4 border border-blue-500/20 bg-gradient-to-r from-black to-[#0a0f1f]">
-        <h3 className="font-medium mb-2 text-blue-300 flex items-center gap-2">
-          <Sparkles className="w-4 h-4" /> Gợi ý theo cảm xúc của bạn
-        </h3>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={userInput}
-            onChange={(e) => setUserInput(e.target.value)}
-            placeholder="Ví dụ: mình thấy cô đơn / bài nào hot nhất / giới thiệu về Lyhan..."
-            className="flex-1 rounded-md border border-blue-500/50 bg-black px-3 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <Button onClick={handleRecommend} className="bg-blue-600 hover:bg-blue-500">
-            <Search className="w-4 h-4 mr-1" />
-            Gợi ý
-          </Button>
-        </div>
-
-        {rec && (
-          <div className="mt-3 text-sm">
-            <p className="text-blue-100 leading-relaxed">{rec.message}</p>
-
-            {rec.song && (
-              <div className="mt-2 flex items-center gap-2 flex-wrap">
-                <span className="text-blue-300">
-                  → Đề cử:{" "}
-                  <span className="font-semibold text-blue-200">{rec.song.title}</span>
-                </span>
-                <Button
-                  size="sm"
-                  variant="default"
-                  onClick={playRecommended}
-                  className="h-8 px-3 border-blue-500/50 text-blue-200 hover:bg-blue-900/30"
-                >
-                  <Play className="w-4 h-4 mr-1" /> Phát gợi ý
-                </Button>
-                <a
-                  href={`https://www.youtube.com/watch?v=${rec.song.youtubeId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs underline text-blue-300 hover:text-blue-200"
-                >
-                  Mở trên YouTube
-                </a>
-              </div>
-            )}
-          </div>
-        )}
-      </Card>
 
       {/* Danh sách bài hát */}
       <div className="space-y-3">
@@ -108,17 +42,15 @@ export function Playlist() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <Music className="w-6 h-6 text-muted-foreground m-auto" />
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Music className="w-6 h-6 text-muted-foreground" />
+                      </div>
                     )}
                   </div>
 
                   {/* Thông tin bài hát */}
                   <div className="flex-1 min-w-0">
-                    <h3
-                      className={`font-medium truncate ${
-                        isCurrentSong ? "text-primary" : ""
-                      }`}
-                    >
+                    <h3 className={`font-medium truncate ${isCurrentSong ? "text-primary" : ""}`}>
                       {song.title}
                     </h3>
                     <p className="text-sm text-muted-foreground truncate">
@@ -132,22 +64,13 @@ export function Playlist() {
                       {song.duration}
                     </span>
 
-                    <button
+                    <Button
                       onClick={() => handlePlayPause(song)}
-                      className={`
-                        w-10 h-10 flex items-center justify-center rounded-full
-                        transition-colors
-                        ${isCurrentlyPlaying
-                          ? "bg-blue-600 text-white hover:bg-blue-500"
-                          : "bg-blue-200 text-blue-900 hover:bg-blue-300"}
-                      `}
+                      className={isCurrentlyPlaying ? "bg-blue-600 hover:bg-blue-500" : "bg-blue-200 hover:bg-blue-300 text-blue-900"}
+                      size="icon"
                     >
-                      {isCurrentlyPlaying ? (
-                        <Pause className="w-4 h-4" />
-                      ) : (
-                        <Play className="w-4 h-4" />
-                      )}
-                    </button>
+                      {isCurrentlyPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    </Button>
                   </div>
                 </div>
               </CardContent>

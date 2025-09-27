@@ -27,7 +27,6 @@ const baseItems = [
 const mediaItems = [
   { href: "/socials", label: "Socials", icon: Users },
   { href: "/events", label: "Events", icon: Calendar },
-  { href: "/about", label: "About", icon: User },
 ]
 
 export function Navigation() {
