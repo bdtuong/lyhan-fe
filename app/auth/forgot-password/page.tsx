@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { forgotPassword } from "@/services/auth.services"
 import LiquidGlass from "@/components/ui/liquid-glass"
 import { EffectiveInput } from "@/components/ui/effective-input"
@@ -20,9 +19,12 @@ export default function ForgotPasswordPage() {
 
     try {
       const res = await forgotPassword(email)
-      setMessage(res.message) // BE trả { message: 'Password reset email sent' }
+      // BE trả { message: "Password reset email sent" }
+      setMessage(
+        "✅ Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư, kể cả thư mục Spam/Junk."
+      )
     } catch (err: any) {
-      setError(err.message)
+      setError(err.message || "❌ Có lỗi xảy ra, vui lòng thử lại.")
     } finally {
       setLoading(false)
     }
