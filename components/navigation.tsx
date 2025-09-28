@@ -33,7 +33,6 @@ export function Navigation() {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
   const [showNav, setShowNav] = useState(true)
-  const [lastScrollY, setLastScrollY] = useState(0)
 
   const [openUserMenu, setOpenUserMenu] = useState(false)
   const [openMediaMenu, setOpenMediaMenu] = useState(false)
@@ -43,20 +42,32 @@ export function Navigation() {
 
   const userMenuRef = useRef<HTMLDivElement | null>(null)
   const mediaMenuRef = useRef<HTMLDivElement | null>(null)
+  const lastYRef = useRef(0)
 
   const { user, setUser } = useAuth()
 
-  // hide/show on scroll + scrolled style
+  // hide/show on scroll + scrolled style (mượt hơn, phù hợp iOS/Android)
   useEffect(() => {
-    const handleScroll = () => {
-      const currentY = window.scrollY
-      setScrolled(currentY > 10)
-      setShowNav(currentY <= lastScrollY)
-      setLastScrollY(currentY)
+    let ticking = false
+    const onScroll = () => {
+      const y = window.scrollY
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(y > 10)
+          const delta = y - lastYRef.current
+          if (Math.abs(delta) > 8) {
+            // cuộn lên hoặc còn ở gần top thì hiện; cuộn xuống sâu sẽ ẩn
+            setShowNav(delta < 0 || y < 80)
+            lastYRef.current = y
+          }
+          ticking = false
+        })
+        ticking = true
+      }
     }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [lastScrollY])
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
 
   // click outside to close dropdowns
   useEffect(() => {
@@ -72,13 +83,12 @@ export function Navigation() {
     return () => window.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const mediaActive = mediaItems.some(i => pathname.startsWith(i.href))
+  const mediaActive = mediaItems.some((i) => pathname.startsWith(i.href))
 
   return (
     <nav
       className={cn(
-        "fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-xl text-white",
-        // hơi trong suốt
+        "fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-xl text-white pt-[env(safe-area-inset-top)]",
         "supports-[backdrop-filter]:bg-slate-900/45 bg-slate-900/55 border-b border-white/10",
         scrolled ? "shadow-lg py-2" : "py-3",
         showNav ? "translate-y-0" : "-translate-y-full"
@@ -91,11 +101,11 @@ export function Navigation() {
             href="/"
             className="text-2xl font-extrabold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent"
           >
-            Lyhan
+            LYHAN
           </Link>
 
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center space-x-6">
+          {/* Desktop nav (đổi breakpoint: lg) */}
+          <div className="hidden lg:flex items-center space-x-4">
             {baseItems.map((item) => {
               const Icon = item.icon
               const active = pathname === item.href
@@ -118,7 +128,7 @@ export function Navigation() {
             {/* Media dropdown */}
             <div className="relative" ref={mediaMenuRef}>
               <button
-                onClick={() => setOpenMediaMenu(v => !v)}
+                onClick={() => setOpenMediaMenu((v) => !v)}
                 className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition",
                   mediaActive ? "text-blue-300" : "text-gray-200/85 hover:text-blue-300",
@@ -130,17 +140,14 @@ export function Navigation() {
                 <LayoutGrid className="w-4 h-4" />
                 <span>Media</span>
                 <ChevronDown
-                  className={cn(
-                    "w-4 h-4 transition-transform",
-                    openMediaMenu ? "rotate-180" : "rotate-0"
-                  )}
+                  className={cn("w-4 h-4 transition-transform", openMediaMenu ? "rotate-180" : "rotate-0")}
                 />
               </button>
 
               {openMediaMenu && (
                 <div
                   role="menu"
-                  className="absolute right-0 mt-2 min-w-48 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-lg shadow-xl py-1"
+                  className="absolute right-0 mt-2 min-w-40 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-lg shadow-xl py-1"
                 >
                   {mediaItems.map((item) => {
                     const Icon = item.icon
@@ -151,9 +158,7 @@ export function Navigation() {
                         href={item.href}
                         className={cn(
                           "flex items-center gap-2 px-4 py-2 text-sm",
-                          active
-                            ? "text-blue-300 bg-white/5"
-                            : "text-gray-200/90 hover:text-white hover:bg-white/5"
+                          active ? "text-blue-300 bg-white/5" : "text-gray-200/90 hover:text-white hover:bg-white/5"
                         )}
                         onClick={() => setOpenMediaMenu(false)}
                       >
@@ -183,10 +188,7 @@ export function Navigation() {
                 )}
                 <span>{user?.username || "User"}</span>
                 <ChevronDown
-                  className={cn(
-                    "w-4 h-4 transition-transform",
-                    openUserMenu ? "rotate-180" : "rotate-0"
-                  )}
+                  className={cn("w-4 h-4 transition-transform", openUserMenu ? "rotate-180" : "rotate-0")}
                 />
               </button>
 
@@ -235,24 +237,28 @@ export function Navigation() {
             </div>
           </div>
 
-          {/* Mobile button */}
-          <div className="md:hidden">
+          {/* Mobile button (áp dụng tới <lg) */}
+          <div className="lg:hidden">
             <button
               className="p-2 rounded-md text-gray-200/90 hover:text-blue-300 hover:bg-white/10"
               aria-label="Toggle Menu"
-              onClick={() => setMobileOpen(v => !v)}
+              onClick={() => setMobileOpen((v) => !v)}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d={mobileOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d={mobileOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+                />
               </svg>
             </button>
           </div>
         </div>
 
-        {/* Mobile menu panel */}
+        {/* Mobile menu panel (<lg) */}
         {mobileOpen && (
-          <div className="md:hidden mt-3 pb-3 border-t border-white/10">
+          <div className="lg:hidden mt-3 pb-3 border-t border-white/10">
             <div className="flex flex-col gap-1 pt-3">
               {baseItems.map((item) => {
                 const Icon = item.icon
@@ -263,9 +269,7 @@ export function Navigation() {
                     href={item.href}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2 rounded-md",
-                      active
-                        ? "text-blue-300 bg-white/5"
-                        : "text-gray-200/90 hover:text-white hover:bg-white/5"
+                      active ? "text-blue-300 bg-white/5" : "text-gray-200/90 hover:text-white hover:bg-white/5"
                     )}
                     onClick={() => setMobileOpen(false)}
                   >
@@ -281,7 +285,7 @@ export function Navigation() {
                   "flex items-center justify-between px-3 py-2 rounded-md",
                   mediaActive ? "text-blue-300 bg-white/5" : "text-gray-200/90 hover:bg-white/5"
                 )}
-                onClick={() => setMobileMediaOpen(v => !v)}
+                onClick={() => setMobileMediaOpen((v) => !v)}
                 aria-expanded={mobileMediaOpen}
               >
                 <span className="flex items-center gap-3">
@@ -289,10 +293,7 @@ export function Navigation() {
                   Media
                 </span>
                 <ChevronDown
-                  className={cn(
-                    "w-5 h-5 transition-transform",
-                    mobileMediaOpen ? "rotate-180" : "rotate-0"
-                  )}
+                  className={cn("w-5 h-5 transition-transform", mobileMediaOpen ? "rotate-180" : "rotate-0")}
                 />
               </button>
               {mobileMediaOpen && (
@@ -306,9 +307,7 @@ export function Navigation() {
                         href={item.href}
                         className={cn(
                           "flex items-center gap-2 px-3 py-2 rounded-md text-sm",
-                          active
-                            ? "text-blue-300 bg-white/5"
-                            : "text-gray-200/90 hover:text-white hover:bg-white/5"
+                          active ? "text-blue-300 bg-white/5" : "text-gray-200/90 hover:text-white hover:bg-white/5"
                         )}
                         onClick={() => {
                           setMobileOpen(false)
@@ -348,8 +347,20 @@ export function Navigation() {
                 </div>
               ) : (
                 <div className="flex items-center gap-3 px-3">
-                  <Link href="/auth/login" className="text-gray-200 hover:text-white" onClick={() => setMobileOpen(false)}>Login</Link>
-                  <Link href="/auth/register" className="text-gray-200 hover:text-white" onClick={() => setMobileOpen(false)}>Register</Link>
+                  <Link
+                    href="/auth/login"
+                    className="text-gray-200 hover:text-white"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/auth/register"
+                    className="text-gray-200 hover:text-white"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Register
+                  </Link>
                 </div>
               )}
             </div>

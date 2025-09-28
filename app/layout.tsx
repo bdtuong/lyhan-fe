@@ -9,14 +9,16 @@ import { Suspense } from "react"
 import { MouseEffect } from "@/components/ui/mouse-effect"
 import { AuthProvider } from "@/context/AuthContext"
 import { MusicPlayer } from "@/components/music-player"
+import { Toaster } from "react-hot-toast" // 👈 thêm import
 
 const beVietnam = Be_Vietnam_Pro({
-  subsets: ["latin", "vietnamese"], variable: "--font-sans",
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-sans",
   weight: "100"
 })
 
 export const metadata: Metadata = {
-  title: "Lyhan Mini Social Media",
+  title: "LYHAN Mini Social Media",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -30,9 +32,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Footer />
           </Suspense>
         </AuthProvider>
+
+        {/* Global utilities */}
         <Analytics />
         <MusicPlayer />
         <MouseEffect />
+
+        {/* 🔔 Toasts hiển thị toàn cục */}
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            duration: 2200,
+            style: { background: "rgba(15,23,42,0.9)", color: "#fff", border: "1px solid rgba(255,255,255,0.1)" }
+          }}
+        />
       </body>
     </html>
   )

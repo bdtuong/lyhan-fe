@@ -9,10 +9,11 @@ import { decodeJWT } from "@/utils/jwt"
 import { toggleLike } from "@/services/post.services"
 import { CommentModal } from "./CommentModal"
 import { Lightbox, LightboxImage } from "@/components/lightbox"
+import toast from "react-hot-toast" // 👈 dùng react-hot-toast
 
 type Props = {
   post: any
-  actionsSlot?: React.ReactNode // ⭐ nơi nhét nút 3 chấm từ ngoài vào
+  actionsSlot?: React.ReactNode
 }
 
 export function PostItem({ post, actionsSlot }: Props) {
@@ -36,6 +37,12 @@ export function PostItem({ post, actionsSlot }: Props) {
     } catch (err) {
       console.error("❌ Like error:", err)
     }
+  }
+
+  const handleShareClick = () => {
+    toast("🚧 Tính năng chia sẻ sẽ sớm có mặt!", {
+      duration: 2200
+    })
   }
 
   const images: string[] =
@@ -76,7 +83,7 @@ export function PostItem({ post, actionsSlot }: Props) {
               </div>
             </Link>
 
-            {/* ⭐ slot cho menu ngoài truyền vào */}
+            {/* slot cho menu ngoài truyền vào */}
             {actionsSlot}
           </div>
 
@@ -192,7 +199,10 @@ export function PostItem({ post, actionsSlot }: Props) {
               <MessageCircle className="w-4 h-4" />
               {post.commentsCount || 0}
             </button>
-            <button className="flex items-center gap-1 hover:text-primary transition-colors">
+            <button
+              className="flex items-center gap-1 hover:text-primary transition-colors"
+              onClick={handleShareClick} // 👈 toast "coming soon"
+            >
               <Share className="w-4 h-4" />
               Chia sẻ
             </button>
@@ -201,9 +211,7 @@ export function PostItem({ post, actionsSlot }: Props) {
       </Card>
 
       {/* Comment Modal */}
-      {showModal && (
-        <CommentModal postId={post._id} onClose={() => setShowModal(false)} />
-      )}
+      {showModal && <CommentModal postId={post._id} onClose={() => setShowModal(false)} />}
 
       {/* Lightbox */}
       {selectedImage && (

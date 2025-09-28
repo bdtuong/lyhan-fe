@@ -39,9 +39,9 @@ export function Footer() {
         <div className="flex flex-col items-start md:items-end justify-between space-y-6">
           <div className="flex space-x-4">
             {[
-              { href: "https://facebook.com", icon: Facebook },
-              { href: "https://instagram.com", icon: Instagram },
-              { href: "https://youtube.com", icon: Youtube },
+              { href: "https://www.facebook.com/profile.php?id=100075664732643", icon: Facebook },
+              { href: "https://www.instagram.com/__lyhan__/", icon: Instagram },
+              { href: "https://www.youtube.com/channel/UCWBhNrnr35nhNYS3PJBRP4Q", icon: Youtube },
             ].map(({ href, icon: Icon }, i) => (
               <Link
                 key={i}

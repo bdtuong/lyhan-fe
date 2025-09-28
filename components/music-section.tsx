@@ -46,7 +46,7 @@ export function MusicSection() {
         viewport={{ once: true, amount: 0.3 }}
         className="w-full md:w-1/2 flex flex-col items-center gap-6"
       >
-        {/* Box lớn */}
+        {/* Box lớn (giữ Link) */}
         <Link href="/music" className="w-full md:w-4/5">
           <LiquidGlass
             className="p-6 md:p-8 text-left cursor-pointer flex flex-col items-start"
@@ -70,12 +70,12 @@ export function MusicSection() {
           </LiquidGlass>
         </Link>
 
-        {/* Các box nhỏ — ẨN trên mobile, hiện từ md trở lên */}
+        {/* Các box nhỏ — ẨN trên mobile, hiện từ md trở lên (đÃ BỎ LINK) */}
         <div className="hidden md:grid w-full md:w-4/5 grid-cols-1 gap-4">
           {songs.map((song) => (
-            <Link key={song.title} href={song.href}>
+            <div key={song.title}>
               <LiquidGlass
-                className="group relative p-4 flex items-center justify-center cursor-pointer h-full"
+                className="group relative p-4 flex items-center justify-center h-full"
                 cornerRadius={16}
                 blurAmount={0.1}
                 displacementScale={25}
@@ -93,7 +93,7 @@ export function MusicSection() {
                   </span>
                 </div>
               </LiquidGlass>
-            </Link>
+            </div>
           ))}
         </div>
       </motion.div>
