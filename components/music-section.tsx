@@ -2,25 +2,13 @@
 
 import Link from "next/link"
 import LiquidGlass from "@/components/ui/liquid-glass"
-import { Music, PlayCircle } from "lucide-react"
+import { Music } from "lucide-react"
 import { motion } from "framer-motion"
 
 const songs = [
-  {
-    title: "Rơi tự do",
-    thumbnail: "/thumbs/rtd.jpg",
-    href: "/music/song1",
-  },
-  {
-    title: "Nhân danh tình yêu",
-    thumbnail: "/thumbs/ndty.jpg",
-    href: "/music/song2",
-  },
-  {
-    title: "WELCOME HOME",
-    thumbnail: "/thumbs/wh.jpg",
-    href: "/music/song3",
-  },
+  { title: "Rơi tự do", thumbnail: "/thumbs/rtd.jpg", href: "/music/song1" },
+  { title: "Nhân danh tình yêu", thumbnail: "/thumbs/ndty.jpg", href: "/music/song2" },
+  { title: "WELCOME HOME", thumbnail: "/thumbs/wh.jpg", href: "/music/song3" },
 ]
 
 export function MusicSection() {
@@ -82,33 +70,32 @@ export function MusicSection() {
           </LiquidGlass>
         </Link>
 
-        {/* Các box nhỏ */}
-        <div className="w-full md:w-4/5 grid grid-cols-1 gap-4">
+        {/* Các box nhỏ — ẨN trên mobile, hiện từ md trở lên */}
+        <div className="hidden md:grid w-full md:w-4/5 grid-cols-1 gap-4">
           {songs.map((song) => (
-            <LiquidGlass
-              key={song.title}
-              className="group relative p-4 flex items-center justify-center cursor-pointer h-full"
-              cornerRadius={16}
-              blurAmount={0.1}
-              displacementScale={25}
-              elasticity={0.15}
-            >
-              {/* Thumbnail + title ngang nhau, ở giữa */}
-              <div className="flex items-center gap-4">
-                <img
-                  src={song.thumbnail}
-                  alt={song.title}
-                  className="w-12 h-12 md:w-14 md:h-14 rounded-md object-cover"
-                />
-                <span className="text-base md:text-lg font-medium">
-                  {song.title}
-                </span>
-              </div>
-            </LiquidGlass>
+            <Link key={song.title} href={song.href}>
+              <LiquidGlass
+                className="group relative p-4 flex items-center justify-center cursor-pointer h-full"
+                cornerRadius={16}
+                blurAmount={0.1}
+                displacementScale={25}
+                elasticity={0.15}
+              >
+                {/* Thumbnail + title ngang nhau, ở giữa */}
+                <div className="flex items-center gap-4">
+                  <img
+                    src={song.thumbnail}
+                    alt={song.title}
+                    className="w-12 h-12 md:w-14 md:h-14 rounded-md object-cover"
+                  />
+                  <span className="text-base md:text-lg font-medium">
+                    {song.title}
+                  </span>
+                </div>
+              </LiquidGlass>
+            </Link>
           ))}
         </div>
-
-
       </motion.div>
     </section>
   )
