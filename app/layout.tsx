@@ -16,8 +16,7 @@ const beVietnam = Be_Vietnam_Pro({
 })
 
 export const metadata: Metadata = {
-  title: "Wings For Lyhan",
-  description: "Official fan website celebrating our favorite artist",
+  title: "Lyhan Mini Social Media",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

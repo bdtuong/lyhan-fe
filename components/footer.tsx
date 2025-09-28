@@ -18,7 +18,7 @@ export function Footer() {
             Lyhan
           </h2>
           <p className="text-sm leading-relaxed text-gray-400">
-            Official fan project — crafted with ❤️ by Tường & cộng đồng.
+            Official fan project.
           </p>
         </div>
 
