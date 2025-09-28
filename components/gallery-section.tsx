@@ -13,13 +13,13 @@ export function GallerySection() {
         {/* Text */}
         <div className="relative max-w-md px-6 py-8 rounded-xl">
           <h2 className="text-3xl font-serif font-bold text-white mb-4">
-            Cùng nhìn lại <span className="gradient-text">Lyhan</span> sau mỗi hành trình
+            Cùng nhìn lại <span className="gradient-text">LYHAN</span> sau mỗi hành trình
           </h2>
           <p className="text-gray-300 text-base leading-relaxed mb-8">
-            Mỗi sân khấu mà Lyhan đặt chân, mỗi lần giọng ca cất lên đều hóa thành
+            Mỗi sân khấu mà LYHAN đặt chân, mỗi lần giọng ca cất lên đều hóa thành
             những khoảnh khắc lấp lánh, đáng để ghi dấu trong tim. Bộ sưu tập này lưu giữ
             không chỉ hình ảnh, mà còn cả những cảm xúc thăng hoa trên từng chặng đường
-            nghệ thuật của Lyhan.
+            nghệ thuật của LYHAN.
           </p>
 
           {/* CTA button */}

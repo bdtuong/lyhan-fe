@@ -45,11 +45,11 @@ export function SocialSection() {
     >
       <div className="w-full max-w-3xl text-center relative px-4 sm:px-6">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold mb-4 sm:mb-6 leading-tight">
-          Mạng xã hội mini dành cho <span className="gradient-text">Lyhan Fan</span>
+          Mạng xã hội mini dành cho <span className="gradient-text">LYHAN Fan</span>
         </h2>
 
         <p className="text-gray-300 text-sm sm:text-base lg:text-lg leading-relaxed mb-4 sm:mb-6">
-          Đây là không gian riêng tư, nơi những người hâm mộ Lyhan có thể kết
+          Đây là không gian riêng tư, nơi những người hâm mộ LYHAN có thể kết
           nối, sẻ chia và lưu giữ những khoảnh khắc đặc biệt. Tại đây, bạn
           không chỉ theo dõi những cập nhật mới nhất mà còn cùng nhau tạo nên
           những kỷ niệm đong đầy cảm xúc.
@@ -57,7 +57,7 @@ export function SocialSection() {
 
         <p className="text-gray-400 text-sm sm:text-base leading-relaxed mb-6 sm:mb-8">
           Hãy cùng tham gia và viết nên câu chuyện cộng đồng – nơi mọi trái tim
-          đồng điệu vì tình yêu dành cho âm nhạc và con người Lyhan.
+          đồng điệu vì tình yêu dành cho âm nhạc và con người LYHAN.
         </p>
 
         {/* CTA button */}

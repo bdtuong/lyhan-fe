@@ -12,19 +12,16 @@ import {
   Home,
   Wand2,
   ChevronDown,
-  LayoutGrid,
 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useAuth } from "@/context/AuthContext"
 
-const baseItems = [
+const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/music", label: "Music", icon: Music },
   { href: "/gallery", label: "Gallery", icon: ImageIcon },
   { href: "/editor", label: "Custom", icon: Wand2 },
-]
-
-const mediaItems = [
+  // moved out of Media dropdown 👇
   { href: "/socials", label: "Socials", icon: Users },
   { href: "/events", label: "Events", icon: Calendar },
 ]
@@ -35,18 +32,14 @@ export function Navigation() {
   const [showNav, setShowNav] = useState(true)
 
   const [openUserMenu, setOpenUserMenu] = useState(false)
-  const [openMediaMenu, setOpenMediaMenu] = useState(false)
-
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [mobileMediaOpen, setMobileMediaOpen] = useState(false)
 
   const userMenuRef = useRef<HTMLDivElement | null>(null)
-  const mediaMenuRef = useRef<HTMLDivElement | null>(null)
   const lastYRef = useRef(0)
 
   const { user, setUser } = useAuth()
 
-  // hide/show on scroll + scrolled style (mượt hơn, phù hợp iOS/Android)
+  // hide/show on scroll + scrolled style
   useEffect(() => {
     let ticking = false
     const onScroll = () => {
@@ -56,7 +49,6 @@ export function Navigation() {
           setScrolled(y > 10)
           const delta = y - lastYRef.current
           if (Math.abs(delta) > 8) {
-            // cuộn lên hoặc còn ở gần top thì hiện; cuộn xuống sâu sẽ ẩn
             setShowNav(delta < 0 || y < 80)
             lastYRef.current = y
           }
@@ -69,21 +61,16 @@ export function Navigation() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  // click outside to close dropdowns
+  // click outside to close user dropdown
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setOpenUserMenu(false)
       }
-      if (mediaMenuRef.current && !mediaMenuRef.current.contains(e.target as Node)) {
-        setOpenMediaMenu(false)
-      }
     }
     window.addEventListener("mousedown", handleClickOutside)
     return () => window.removeEventListener("mousedown", handleClickOutside)
   }, [])
-
-  const mediaActive = mediaItems.some((i) => pathname.startsWith(i.href))
 
   return (
     <nav
@@ -104,11 +91,11 @@ export function Navigation() {
             LYHAN
           </Link>
 
-          {/* Desktop nav (đổi breakpoint: lg) */}
+          {/* Desktop nav (lg and up) */}
           <div className="hidden lg:flex items-center space-x-4">
-            {baseItems.map((item) => {
+            {navItems.map((item) => {
               const Icon = item.icon
-              const active = pathname === item.href
+              const active = pathname === item.href || pathname.startsWith(item.href + "/")
               return (
                 <Link
                   key={item.href}
@@ -124,52 +111,6 @@ export function Navigation() {
                 </Link>
               )
             })}
-
-            {/* Media dropdown */}
-            <div className="relative" ref={mediaMenuRef}>
-              <button
-                onClick={() => setOpenMediaMenu((v) => !v)}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition",
-                  mediaActive ? "text-blue-300" : "text-gray-200/85 hover:text-blue-300",
-                  "hover:bg-white/5"
-                )}
-                aria-haspopup="menu"
-                aria-expanded={openMediaMenu}
-              >
-                <LayoutGrid className="w-4 h-4" />
-                <span>Media</span>
-                <ChevronDown
-                  className={cn("w-4 h-4 transition-transform", openMediaMenu ? "rotate-180" : "rotate-0")}
-                />
-              </button>
-
-              {openMediaMenu && (
-                <div
-                  role="menu"
-                  className="absolute right-0 mt-2 min-w-40 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-lg shadow-xl py-1"
-                >
-                  {mediaItems.map((item) => {
-                    const Icon = item.icon
-                    const active = pathname.startsWith(item.href)
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                          "flex items-center gap-2 px-4 py-2 text-sm",
-                          active ? "text-blue-300 bg-white/5" : "text-gray-200/90 hover:text-white hover:bg-white/5"
-                        )}
-                        onClick={() => setOpenMediaMenu(false)}
-                      >
-                        <Icon className="w-4 h-4" />
-                        {item.label}
-                      </Link>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
 
             {/* User dropdown */}
             <div className="relative" ref={userMenuRef}>
@@ -237,7 +178,7 @@ export function Navigation() {
             </div>
           </div>
 
-          {/* Mobile button (áp dụng tới <lg) */}
+          {/* Mobile button (<lg) */}
           <div className="lg:hidden">
             <button
               className="p-2 rounded-md text-gray-200/90 hover:text-blue-300 hover:bg-white/10"
@@ -260,9 +201,9 @@ export function Navigation() {
         {mobileOpen && (
           <div className="lg:hidden mt-3 pb-3 border-t border-white/10">
             <div className="flex flex-col gap-1 pt-3">
-              {baseItems.map((item) => {
+              {navItems.map((item) => {
                 const Icon = item.icon
-                const active = pathname === item.href
+                const active = pathname === item.href || pathname.startsWith(item.href + "/")
                 return (
                   <Link
                     key={item.href}
@@ -278,49 +219,6 @@ export function Navigation() {
                   </Link>
                 )
               })}
-
-              {/* Mobile Media accordion */}
-              <button
-                className={cn(
-                  "flex items-center justify-between px-3 py-2 rounded-md",
-                  mediaActive ? "text-blue-300 bg-white/5" : "text-gray-200/90 hover:bg-white/5"
-                )}
-                onClick={() => setMobileMediaOpen((v) => !v)}
-                aria-expanded={mobileMediaOpen}
-              >
-                <span className="flex items-center gap-3">
-                  <LayoutGrid className="w-5 h-5" />
-                  Media
-                </span>
-                <ChevronDown
-                  className={cn("w-5 h-5 transition-transform", mobileMediaOpen ? "rotate-180" : "rotate-0")}
-                />
-              </button>
-              {mobileMediaOpen && (
-                <div className="ml-8 flex flex-col gap-1">
-                  {mediaItems.map((item) => {
-                    const Icon = item.icon
-                    const active = pathname.startsWith(item.href)
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                          "flex items-center gap-2 px-3 py-2 rounded-md text-sm",
-                          active ? "text-blue-300 bg-white/5" : "text-gray-200/90 hover:text-white hover:bg-white/5"
-                        )}
-                        onClick={() => {
-                          setMobileOpen(false)
-                          setMobileMediaOpen(false)
-                        }}
-                      >
-                        <Icon className="w-4 h-4" />
-                        {item.label}
-                      </Link>
-                    )
-                  })}
-                </div>
-              )}
             </div>
 
             {/* Mobile auth quick actions */}

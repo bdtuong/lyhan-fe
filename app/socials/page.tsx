@@ -14,7 +14,7 @@ export default function SocialsPage() {
           <div className="text-center mb-12 text-white">
             <h1 className="text-2xl md:text-5xl font-bold mb-4">Ngôi nhà nhỏ</h1>
             <p className="text-lg text-white/80">
-              Nơi mọi người tụ họp, chia sẻ khoảnh khắc và lan toả tình thương dành cho Lyhan ✨
+              Nơi mọi người tụ họp, chia sẻ khoảnh khắc và lan toả tình thương dành cho LYHAN ✨
             </p>
           </div>
 

@@ -45,16 +45,16 @@ export function EventsSection() {
     >
       <div className="w-full max-w-3xl text-center relative px-4 sm:px-6">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold mb-4 sm:mb-6 leading-tight">
-          Theo dõi sự kiện của <span className="gradient-text"> Lyhan</span> cùng tụi mình nhaaa
+          Theo dõi sự kiện của <span className="gradient-text"> LYHAN</span> cùng tụi mình nhaaa
         </h2>
 
         <p className="text-gray-300 text-sm sm:text-base lg:text-lg leading-relaxed mb-4 sm:mb-6">
-          Đừng bỏ lỡ bất kỳ khoảnh khắc nào trong hành trình âm nhạc của Lyhan. 
+          Đừng bỏ lỡ bất kỳ khoảnh khắc nào trong hành trình âm nhạc của LYHAN. 
           Tại đây, bạn sẽ tìm thấy lịch trình các buổi diễn, fan-meeting và những sự kiện đặc biệt.
         </p>
 
         <p className="text-gray-400 text-sm sm:text-base leading-relaxed mb-6 sm:mb-8">
-          Cập nhật liên tục để bạn có thể đồng hành cùng Lyhan ở mọi chặng đường và ghi dấu những kỷ niệm khó quên.
+          Cập nhật liên tục để bạn có thể đồng hành cùng LYHAN ở mọi chặng đường và ghi dấu những kỷ niệm khó quên.
         </p>
 
         {/* CTA button */}

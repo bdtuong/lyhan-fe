@@ -60,11 +60,11 @@ export function MusicSection() {
                 <Music className="w-6 h-6 md:w-8 md:h-8 text-white" />
               </div>
               <h3 className="text-2xl md:text-3xl font-semibold group-hover:text-primary transition-colors">
-                Nghe nhạc cùng Lyhan
+                Nghe nhạc cùng LYHAN
               </h3>
             </div>
             <p className="text-white/80 text-base md:text-lg leading-relaxed">
-              Bước vào thế giới âm nhạc của Lyhan, nơi giai điệu dịu dàng và sâu lắng khẽ
+              Bước vào thế giới âm nhạc của LYHAN, nơi giai điệu dịu dàng và sâu lắng khẽ
               ngân – không chỉ để nghe, mà để chạm đến trái tim.
             </p>
           </LiquidGlass>

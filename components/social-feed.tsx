@@ -264,7 +264,7 @@ export function FanSocialPage() {
                 className="w-full flex gap-3 items-center p-4 rounded-xl bg-neutral-900/50 hover:bg-neutral-800/50 border border-blue-500/10 hover:border-blue-500/20 transition-all duration-200"
               >
                 <img src={avatar} alt="me" className="w-10 h-10 rounded-full" />
-                <span className="text-neutral-400 text-left flex-1">Viết cảm nghĩ của bạn về Lyhan...</span>
+                <span className="text-neutral-400 text-left flex-1">Viết cảm nghĩ của bạn về LYHAN...</span>
                 <ImagePlus className="w-6 h-6 text-neutral-500" />
               </button>
             </CardContent>
