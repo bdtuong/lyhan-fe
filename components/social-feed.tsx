@@ -6,21 +6,38 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { ImagePlus, X, Smile, Search, Menu, Home, User, Plus } from "lucide-react"
+import { ImagePlus, X, Smile, Search, Plus, ShieldCheck } from "lucide-react"
 import { decodeJWT } from "@/utils/jwt"
 import { getUser } from "@/services/auth.services"
-import { getPosts, createPost, searchPosts as searchPostsAPI } from "@/services/post.services"
+import {
+  getPosts,
+  createPost,
+  searchPosts as searchPostsAPI,
+  approvePost
+} from "@/services/post.services"
 import { PostItem } from "@/components/PostItem"
 import { LyhanLoading } from "@/components/ui/loading"
 import EmojiPicker from "emoji-picker-react"
+// 🆕 toast
+import { Toaster, toast } from "react-hot-toast"
 
 type SearchUser = { _id: string; username: string; avatar?: string }
 type SearchPost = any
+type Post = {
+  _id: string
+  images?: string[]
+  content?: string
+  title?: string
+  userID?: string
+  userInfo?: any
+  isPending?: boolean
+  [k: string]: any
+}
 
 export function FanSocialPage() {
   const router = useRouter()
 
-  const [posts, setPosts] = useState<any[]>([])
+  const [posts, setPosts] = useState<Post[]>([])
   const [newContent, setNewContent] = useState("")
   const [newImages, setNewImages] = useState<File[]>([])
   const [posting, setPosting] = useState(false)
@@ -42,6 +59,7 @@ export function FanSocialPage() {
   const [userId, setUserId] = useState("")
   const [username, setUsername] = useState("Bạn")
   const [avatar, setAvatar] = useState("/avatars/default.png")
+  const [isAdmin, setIsAdmin] = useState(false)
 
   // infinite scroll
   const [page, setPage] = useState(1)
@@ -50,23 +68,32 @@ export function FanSocialPage() {
   const [loadingMore, setLoadingMore] = useState(false)
   const loaderRef = useRef<HTMLDivElement | null>(null)
 
-  // lấy user info từ token
-  useEffect(() => {
-    const token = localStorage.getItem("token")
-    if (!token) return
-    const decoded = decodeJWT(token)
-    if (!decoded?.id) return
-    setUserId(decoded.id)
+  // 1) Decode JWT để lấy userId + isAdmin (giống EventsTimeline)
+useEffect(() => {
+  const token = localStorage.getItem("token")
+  if (!token) {
+    setIsAdmin(false)
+    setUserId("")
+    return
+  }
+  const decoded = decodeJWT(token)
+  setIsAdmin(decoded?.admin === true) // <-- quan trọng: lấy quyền admin từ token
+  if (decoded?.id) setUserId(decoded.id)
+}, [])
 
-    getUser(decoded.id, token)
-      .then((data) => {
-        setUsername(data.username || "Bạn")
-        setAvatar(
-          Array.isArray(data.avatar) ? data.avatar[0] : data.avatar || "/avatars/default.png"
-        )
-      })
-      .catch((err) => console.error("❌ Lỗi getUser:", err))
-  }, [])
+// 2) Gọi getUser chỉ để lấy avatar/username (không set isAdmin ở đây nữa)
+useEffect(() => {
+  const token = localStorage.getItem("token")
+  if (!token || !userId) return
+
+  getUser(userId, token)
+    .then((data) => {
+      setUsername(data.username || "Bạn")
+      setAvatar(Array.isArray(data.avatar) ? data.avatar[0] : data.avatar || "/avatars/default.png")
+    })
+    .catch((err) => console.error("❌ Lỗi getUser:", err))
+}, [userId])
+
 
   // fetch posts (feed mode)
   useEffect(() => {
@@ -74,12 +101,14 @@ export function FanSocialPage() {
     let cancel = false
     setLoadingMore(true)
 
-    getPosts(page, pageSize)
+    getPosts(page, pageSize, { includePending: isAdmin })
       .then((data) => {
-        if (!cancel) {
-          setPosts((prev) => (page === 1 ? data.boards || [] : [...prev, ...(data.boards || [])]))
-          setTotal(data.totalCount || 0)
-        }
+        if (cancel) return
+        const next = (data.boards || []) as Post[]
+        // 🆕 nếu KHÔNG phải admin → chỉ ẩn post có isPending === true.
+        const visible = isAdmin ? next : next.filter((p) => p.isPending !== true)
+        setPosts((prev) => (page === 1 ? visible : [...prev, ...visible]))
+        setTotal(data.totalCount || 0)
       })
       .catch((err) => console.error("❌ Lỗi fetch posts:", err))
       .finally(() => setLoadingMore(false))
@@ -87,7 +116,13 @@ export function FanSocialPage() {
     return () => {
       cancel = true
     }
-  }, [page, pageSize, mode])
+  }, [page, pageSize, mode, isAdmin])
+
+  // nếu chuyển quyền → reload feed
+  useEffect(() => {
+    setPage(1)
+    setPosts([])
+  }, [isAdmin])
 
   // observer (chỉ bật ở feed mode)
   useEffect(() => {
@@ -124,12 +159,16 @@ export function FanSocialPage() {
         },
         token
       )
-      setPosts((prev) => [newPost, ...prev])
+      // server mặc định isPending=true → chỉ admin thấy
+      setPosts((prev) => (isAdmin ? [newPost, ...prev] : prev))
       setNewContent("")
       setNewImages([])
       setShowCreateModal(false)
+      // 🆕 toast thông báo
+      toast.success("Bài viết đã được tạo thành công và đang chờ admin kiểm duyệt.")
     } catch (err) {
       console.error("❌ Upload thất bại:", err)
+      toast.error("Tạo bài viết thất bại. Vui lòng thử lại.")
     } finally {
       setPosting(false)
     }
@@ -147,48 +186,66 @@ export function FanSocialPage() {
     return () => clearTimeout(t)
   }, [keyword])
 
-  // call BE search
-  useEffect(() => {
-    const run = async () => {
-      if (!debounced) {
-        setSearchUsers([])
-        setSearchPosts([])
-        return
-      }
-      setSearching(true)
-      try {
-        const data = await searchPostsAPI(debounced)
-        const postsArr: any[] = Array.isArray(data) ? data : []
-        setSearchPosts(postsArr)
-
-        const usersMap = new Map<string, SearchUser>()
-        for (const p of postsArr) {
-          const u = p.userInfo || {}
-          const id = (u._id || p.userID || p.userId || "").toString()
-          const name = u.username || p.username
-          if (id && name && !usersMap.has(id)) {
-            usersMap.set(id, {
-              _id: id,
-              username: name,
-              avatar: Array.isArray(u.avatar) ? u.avatar[0] : u.avatar
-            })
-          }
-        }
-        setSearchUsers(Array.from(usersMap.values()))
-      } catch (e) {
-        console.error("search error:", e)
-        setSearchPosts([])
-        setSearchUsers([])
-      } finally {
-        setSearching(false)
-      }
+  // 🔁 REVERT: search thuần, giống bản cũ
+useEffect(() => {
+  const run = async () => {
+    const q = debounced.trim();
+    if (q.length < 2) {
+      setSearchUsers([]);
+      setSearchPosts([]);
+      return;
     }
-    run()
-  }, [debounced])
+    setSearching(true);
+    try {
+      const data = await searchPostsAPI(q); // ⬅️ trả về MẢNG
+      const postsArr: Post[] = Array.isArray(data)
+        ? data
+        : Array.isArray((data as any)?.boards)
+        ? (data as any).boards
+        : [];
 
-  const displayPosts = useMemo(() => (mode === "search" ? searchPosts : posts), [mode, searchPosts, posts])
+      // ẩn pending ở client cho chắc (user thường)
+      const visible = isAdmin ? postsArr : postsArr.filter(p => p?.isPending !== true);
+      setSearchPosts(visible);
 
-  const enterSearchModeWithPosts = (items: any[]) => {
+      const usersMap = new Map<string, SearchUser>();
+      for (const p of visible) {
+        const u = p.userInfo || {};
+        const id = (u._id || p.userID || (p as any).userId || "").toString();
+        const name = u.username || (p as any).username;
+        if (id && name && !usersMap.has(id)) {
+          usersMap.set(id, {
+            _id: id,
+            username: name,
+            avatar: Array.isArray(u.avatar) ? u.avatar[0] : u.avatar
+          });
+        }
+      }
+      setSearchUsers(Array.from(usersMap.values()));
+    } catch (e) {
+      console.error("🔴 search error:", e);
+      setSearchUsers([]);
+      setSearchPosts([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+  run();
+  // ❗ không phụ thuộc isAdmin để hành vi y hệt phiên bản cũ
+}, [debounced]);
+
+
+
+
+
+
+
+  const displayPosts = useMemo(
+    () => (mode === "search" ? (searchPosts as Post[]) : posts),
+    [mode, searchPosts, posts]
+  )
+
+  const enterSearchModeWithPosts = (items: Post[]) => {
     setMode("search")
     setSearchPosts(items)
     setShowSearch(false)
@@ -204,13 +261,38 @@ export function FanSocialPage() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
+  // Approve handler cho admin
+  const [approvingIds, setApprovingIds] = useState<Record<string, boolean>>({})
+  const handleApprove = async (postId: string) => {
+    try {
+      const token = localStorage.getItem("token") || ""
+      setApprovingIds((m) => ({ ...m, [postId]: true }))
+      const updated = await approvePost(postId, token)
+      setPosts((prev) => prev.map((p) => (p._id === postId ? { ...p, ...updated } : p)))
+      setSearchPosts((prev) =>
+        (prev as Post[]).map((p) => (p._id === postId ? { ...p, ...updated } : p))
+      )
+      toast.success("Đã duyệt bài viết.")
+    } catch (e) {
+      console.error("❌ Approve lỗi:", e)
+      toast.error("Duyệt bài thất bại.")
+    } finally {
+      setApprovingIds((m) => {
+        const n = { ...m }
+        delete n[postId]
+        return n
+      })
+    }
+  }
+
   return (
     <>
+    {/* Toaster cho toast */}
+    <Toaster position="top-center" />
       {/* DESKTOP SIDEBAR */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-16 xl:w-20
                   bg-black/90 backdrop-blur-lg border-r border-blue-500/20
                   flex-col items-center gap-2 py-4">
-
         <div className="h-10 w-full mt-12" />
         <button
           onClick={() => setShowSearch(true)}
@@ -230,28 +312,24 @@ export function FanSocialPage() {
         </button>
       </aside>
 
-      {/* MOBILE BOTTOM NAV - SAFE AREA VERSION */}
-<nav
-  className="lg:hidden fixed bottom-0 left-0 right-0 z-50
+      {/* MOBILE BOTTOM NAV */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50
              bg-black/90 backdrop-blur-lg border-t border-blue-500/20
-             pb-[env(safe-area-inset-bottom)]"
->
-  <div className="flex justify-around items-center max-w-md mx-auto h-14">
-    <button onClick={() => setShowSearch(true)}
-      className="flex flex-col items-center justify-center gap-0.5 text-neutral-200 hover:text-blue-400 transition-colors">
-      <Search className="w-6 h-6" />
-      <span className="text-xs">Search</span>
-    </button>
+             pb-[env(safe-area-inset-bottom)]">
+        <div className="flex justify-around items-center max-w-md mx-auto h-14">
+          <button onClick={() => setShowSearch(true)}
+            className="flex flex-col items-center justify-center gap-0.5 text-neutral-200 hover:text-blue-400 transition-colors">
+            <Search className="w-6 h-6" />
+            <span className="text-xs">Search</span>
+          </button>
 
-    <button onClick={() => setShowCreateModal(true)}
-      className="flex flex-col items-center justify-center gap-0.5 text-neutral-200 hover:text-blue-400 transition-colors">
-      <Plus className="w-6 h-6" />
-      <span className="text-xs">Create</span>
-    </button>
-  </div>
-</nav>
-
-
+          <button onClick={() => setShowCreateModal(true)}
+            className="flex flex-col items-center justify-center gap-0.5 text-neutral-200 hover:text-blue-400 transition-colors">
+            <Plus className="w-6 h-6" />
+            <span className="text-xs">Create</span>
+          </button>
+        </div>
+      </nav>
 
       {/* PAGE CONTENT */}
       <main className="lg:pl-16 xl:pl-20 pb-20 lg:pb-0">
@@ -296,9 +374,32 @@ export function FanSocialPage() {
 
           {/* POSTS */}
           <div className="space-y-4 lg:space-y-6">
-            {displayPosts.map((post) => (
-              <PostItem key={post._id} post={post} />
-            ))}
+            {displayPosts.map((post) => {
+              const pending = Boolean(post.isPending)
+              return (
+                <div key={post._id} className="relative">
+                  {/* Nhãn + nút Approve cho admin */}
+                  {isAdmin && pending && (
+                    <div className="absolute -top-2 right-2 z-10 flex items-center gap-2">
+                      <span className="px-2 py-0.5 text-xs rounded-md bg-amber-500/15 border border-amber-400/30 text-amber-300">
+                        Pending
+                      </span>
+                      <Button
+                        size="sm"
+                        className="h-7 bg-emerald-600 hover:bg-emerald-700"
+                        disabled={!!approvingIds[post._id]}
+                        onClick={() => handleApprove(post._id)}
+                      >
+                        <ShieldCheck className="w-4 h-4 mr-1" />
+                        {approvingIds[post._id] ? "Approving..." : "Approve"}
+                      </Button>
+                    </div>
+                  )}
+
+                  <PostItem post={post} />
+                </div>
+              )
+            })}
           </div>
 
           {/* INFINITE SCROLL LOADER */}
@@ -315,11 +416,11 @@ export function FanSocialPage() {
       {showCreateModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           {/* Backdrop */}
-          <div 
+          <div
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setShowCreateModal(false)}
           />
-          
+
           {/* Modal */}
           <div className="relative w-full max-w-lg bg-black/90 backdrop-blur-lg rounded-2xl border border-blue-500/30 shadow-2xl shadow-blue-500/10 animate-in zoom-in-95 duration-200">
             {/* Header */}
@@ -375,10 +476,7 @@ export function FanSocialPage() {
               {/* Emoji Picker */}
               {showEmoji && (
                 <div className="border border-blue-500/20 rounded-lg overflow-hidden">
-                  <EmojiPicker 
-                    onEmojiClick={onEmojiClick}
-                    width="100%"
-                  />
+                  <EmojiPicker onEmojiClick={onEmojiClick} width="100%" />
                 </div>
               )}
             </div>
@@ -413,8 +511,8 @@ export function FanSocialPage() {
                   </label>
                 </div>
 
-                <Button 
-                  onClick={handlePost} 
+                <Button
+                  onClick={handlePost}
                   disabled={posting || !newContent.trim()}
                   className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed border-0"
                 >
@@ -429,12 +527,12 @@ export function FanSocialPage() {
       {/* SEARCH PANEL */}
       {showSearch && (
         <div className="fixed inset-0 lg:flex">
-          {/* Desktop: panel bên trái của sidebar */}
+          {/* Desktop panel */}
           <div className="hidden lg:block lg:ml-16 xl:ml-20 w-80 bg-black/90 backdrop-blur-lg h-full shadow-2xl border-r border-blue-500/20 animate-in slide-in-from-left duration-200">
             <div className="p-4 mt-24">
               <div className="flex justify-between items-center mb-4 ">
                 <h2 className="font-bold text-lg text-white">Tìm kiếm</h2>
-                <button 
+                <button
                   onClick={() => setShowSearch(false)}
                   className="w-8 h-8 rounded-full hover:bg-neutral-800/50 flex items-center justify-center text-neutral-400 hover:text-white transition-colors"
                 >
@@ -453,7 +551,6 @@ export function FanSocialPage() {
                 <Search className="w-4 h-4 text-neutral-400 absolute right-3 top-1/2 -translate-y-1/2" />
               </div>
 
-              {/* Search Results */}
               <div className="overflow-y-auto max-h-[calc(100vh-140px)] space-y-6">
                 {/* Accounts */}
                 <div>
@@ -464,8 +561,8 @@ export function FanSocialPage() {
                         className="text-xs text-blue-400 hover:underline"
                         onClick={() => {
                           const ids = new Set(searchUsers.map((u) => u._id))
-                          const list = searchPosts.filter((p) =>
-                            ids.has((p.userID || p.userId || p.userInfo?._id || "").toString())
+                          const list = (searchPosts as Post[]).filter((p) =>
+                            ids.has((p.userID || (p as any).userId || p.userInfo?._id || "").toString())
                           )
                           enterSearchModeWithPosts(list)
                         }}
@@ -510,10 +607,10 @@ export function FanSocialPage() {
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <p className="font-semibold text-white">Bài viết</p>
-                    {searchPosts.length > 1 && (
+                    {(searchPosts as Post[]).length > 1 && (
                       <button
                         className="text-xs text-blue-400 hover:underline"
-                        onClick={() => enterSearchModeWithPosts(searchPosts)}
+                        onClick={() => enterSearchModeWithPosts(searchPosts as Post[])}
                       >
                         Xem tất cả
                       </button>
@@ -522,13 +619,13 @@ export function FanSocialPage() {
 
                   {searching && keyword ? (
                     <p className="text-sm text-neutral-400">Đang tìm bài viết…</p>
-                  ) : searchPosts.length ? (
+                  ) : (searchPosts as Post[]).length ? (
                     <div className="grid grid-cols-3 gap-2">
-                      {searchPosts.slice(0, 9).flatMap((p) => {
+                      {(searchPosts as Post[]).slice(0, 9).flatMap((p) => {
                         const imgs: string[] = Array.isArray(p.images)
                           ? p.images
-                          : p.imageUrl
-                          ? [p.imageUrl]
+                          : (p as any).imageUrl
+                          ? [(p as any).imageUrl]
                           : []
                         if (imgs.length === 0) return []
                         const u = p.userInfo || {}
@@ -560,12 +657,12 @@ export function FanSocialPage() {
             </div>
           </div>
 
-          {/* Mobile: full screen overlay */}
+          {/* Mobile search overlay */}
           <div className="lg:hidden fixed inset-0 bg-black/95 backdrop-blur-lg">
             <div className="p-4 mt-24">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="font-bold text-lg text-white">Tìm kiếm</h2>
-                <button 
+                <button
                   onClick={() => setShowSearch(false)}
                   className="w-8 h-8 rounded-full hover:bg-neutral-800/50 flex items-center justify-center text-neutral-400 hover:text-white transition-colors"
                 >
@@ -584,9 +681,8 @@ export function FanSocialPage() {
                 <Search className="w-4 h-4 text-neutral-400 absolute right-3 top-1/2 -translate-y-1/2" />
               </div>
 
-              {/* Mobile Search Results - Similar structure but optimized for mobile */}
               <div className="overflow-y-auto max-h-[calc(100vh-140px)] space-y-6">
-                {/* Mobile Accounts */}
+                {/* Accounts */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <p className="font-semibold text-white">Tài khoản</p>
@@ -595,8 +691,8 @@ export function FanSocialPage() {
                         className="text-xs text-blue-400 hover:underline"
                         onClick={() => {
                           const ids = new Set(searchUsers.map((u) => u._id))
-                          const list = searchPosts.filter((p) =>
-                            ids.has((p.userID || p.userId || p.userInfo?._id || "").toString())
+                          const list = (searchPosts as Post[]).filter((p) =>
+                            ids.has((p.userID || (p as any).userId || p.userInfo?._id || "").toString())
                           )
                           enterSearchModeWithPosts(list)
                         }}
@@ -637,14 +733,14 @@ export function FanSocialPage() {
                   )}
                 </div>
 
-                {/* Mobile Posts */}
+                {/* Posts */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <p className="font-semibold text-white">Bài viết</p>
-                    {searchPosts.length > 1 && (
+                    {(searchPosts as Post[]).length > 1 && (
                       <button
                         className="text-xs text-blue-400 hover:underline"
-                        onClick={() => enterSearchModeWithPosts(searchPosts)}
+                        onClick={() => enterSearchModeWithPosts(searchPosts as Post[])}
                       >
                         Xem tất cả
                       </button>
@@ -653,13 +749,13 @@ export function FanSocialPage() {
 
                   {searching && keyword ? (
                     <p className="text-sm text-neutral-400">Đang tìm bài viết…</p>
-                  ) : searchPosts.length ? (
+                  ) : (searchPosts as Post[]).length ? (
                     <div className="grid grid-cols-3 gap-2">
-                      {searchPosts.slice(0, 9).flatMap((p) => {
+                      {(searchPosts as Post[]).slice(0, 9).flatMap((p) => {
                         const imgs: string[] = Array.isArray(p.images)
                           ? p.images
-                          : p.imageUrl
-                          ? [p.imageUrl]
+                          : (p as any).imageUrl
+                          ? [(p as any).imageUrl]
                           : []
                         if (imgs.length === 0) return []
                         const u = p.userInfo || {}
@@ -691,7 +787,7 @@ export function FanSocialPage() {
             </div>
           </div>
 
-          {/* Desktop overlay (chỉ hiển thị phần còn lại) */}
+          {/* Desktop overlay */}
           <div className="hidden lg:block flex-1 bg-black/40" onClick={() => setShowSearch(false)} />
         </div>
       )}

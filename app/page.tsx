@@ -43,9 +43,10 @@ export default function HomePage() {
 
       <div className="relative z-10 space-y-0">
         <HeroSection />
+        <SocialSection />
         <MusicSection />
         <GallerySection />
-        <SocialSection />
+        
         <EventsSection />
       </div>
     </div>

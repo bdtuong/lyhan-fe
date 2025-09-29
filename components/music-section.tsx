@@ -14,7 +14,6 @@ const songs = [
 export function MusicSection() {
   return (
     <section
-      id="next-section"
       className="min-h-screen flex flex-col md:flex-row items-center justify-center gap-12 overflow-hidden py-12 px-4"
     >
       {/* Ảnh với ambient glow */}

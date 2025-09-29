@@ -128,7 +128,7 @@ export function HeroSection() {
         <div className="relative z-10 text-center px-8 py-4">
           <div data-atropos-offset="12" className="flex justify-center">
             <img
-              src="/lyhan-wordmark.png"
+              src="/LyHan-front.png"
               alt="Lyhan Wordmark"
               className="max-h-[200px] md:max-h-[280px] object-contain"
             />

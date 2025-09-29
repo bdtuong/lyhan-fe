@@ -36,6 +36,7 @@ const FloatingIcon = memo(function FloatingIcon({
 export function SocialSection() {
   return (
     <section
+          id="next-section"
       className="
         relative overflow-hidden text-white
         py-12 sm:py-16 md:py-20
