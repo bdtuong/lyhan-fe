@@ -63,6 +63,17 @@ export function Editor() {
   const canvasWidth = size.width
   const canvasHeight = Math.round((canvasWidth * 3) / 2) // 2:3 dọc
 
+    // 🆕 Thêm state để check màn hình nhỏ
+  const [isSmall, setIsSmall] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsSmall(window.innerWidth < 768) // <768px coi như mobile
+    check()
+    window.addEventListener("resize", check)
+    return () => window.removeEventListener("resize", check)
+  }, [])
+
+
   // Card area
   const cardPadding = 12
   const cardX = cardPadding
@@ -339,6 +350,14 @@ export function Editor() {
 
   return (
     <div className="space-y-4">
+      {/* 🆕 Responsive warning */}
+      {isSmall && (
+        <div className="bg-yellow-500/20 text-yellow-200 text-sm p-2 rounded-md border border-yellow-400 text-center">
+          ⚠️ Trình chỉnh sửa này hoạt động tốt hơn trên iPad hoặc laptop.  
+          Vui lòng dùng thiết bị màn hình lớn để trải nghiệm tốt nhất.
+        </div>
+      )}
+
       {/* Top bar – modern UI */}
       <div className="flex flex-wrap items-center gap-2 bg-gradient-to-r from-indigo-800/40 to-fuchsia-700/30 rounded-xl px-3 py-2 border border-indigo-600/40 shadow-lg">
         {/* Mouse tool (chỉ để kéo ảnh nền) */}
