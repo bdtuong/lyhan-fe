@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { Card } from "@/components/ui/card"
 import { Lightbox, LightboxImage } from "@/components/lightbox"
@@ -13,37 +13,87 @@ export function ImageGallery() {
   const [selectedCategory, setSelectedCategory] = useState<string>("Tất cả")
   const [searchTerm, setSearchTerm] = useState("")
 
-  // 🟢 Load tất cả posts một lần
+  // ✅ Infinite scroll states
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(12)
+  const [total, setTotal] = useState(0)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const loaderRef = useRef<HTMLDivElement | null>(null)
+
+  const [loadedPosts, setLoadedPosts] = useState(0) // 🆕 đếm SỐ BÀI đã tải
+
+  // ✅ Hàm xử lý mọi dạng dữ liệu ảnh
+  const extractImageUrls = (post: any): string[] => {
+    let raw = post.images || post.imageUrl || []
+
+    if (typeof raw === "string") return [raw]
+    if (!Array.isArray(raw)) raw = [raw]
+
+    return raw
+      .map((img: any) => {
+        if (!img) return null
+        if (typeof img === "string") return img
+        if (typeof img === "object") return img.url || img.src || img.link || null
+        return null
+      })
+      .filter((src: string): src is string => typeof src === "string" && src.trim() !== "")
+  }
+
+  // ✅ Fetch post theo page
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getPosts(1, 50)
+    let cancel = false
+    setLoadingMore(true)
+
+    getPosts(page, pageSize)
+      .then((res) => {
+        if (cancel) return
         const posts = res.boards || res || []
 
         const mapped: LightboxImage[] = posts.flatMap((post: any) => {
-          const imgs: string[] = Array.isArray(post.images)
-            ? post.images
-            : post.imageUrl
-            ? [post.imageUrl]
-            : []
-
+          const imgs = extractImageUrls(post)
           return imgs.map((img, index) => ({
             id: `${post._id}-${index}`,
-            src: img || "/placeholder.svg",
+            src: img,
             alt: post.content || "Không có nội dung",
             content: post.content || "Chưa có nội dung",
             category: post.hashtags || [],
           }))
         })
 
-        setImages(mapped)
-      } catch (err) {
-        console.error("❌ Lỗi load posts:", err)
-      }
-    }
+        setImages((prev) => (page === 1 ? mapped : [...prev, ...mapped]))
+        setTotal(res.totalCount || 0)
 
-    fetchData()
-  }, [])
+        setLoadedPosts((prev) => (page === 1 ? posts.length : prev + posts.length)) // 🆕
+        // (Optional an toàn): nếu API không ổn định, trang trả < pageSize coi như hết
+        // if (!res.totalCount && posts.length < pageSize) setTotal(page === 1 ? posts.length : (prev + posts.length))
+      })
+      .catch((err) => console.error("❌ Lỗi load posts:", err))
+      .finally(() => setLoadingMore(false))
+
+    return () => {
+      cancel = true
+    }
+  }, [page, pageSize])
+
+  // ✅ IntersectionObserver để tự load tiếp
+  useEffect(() => {
+    const target = loaderRef.current
+    if (!target) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0]
+        if (first.isIntersecting && !loadingMore) {
+          // 🆕 SO SÁNH THEO SỐ BÀI, KHÔNG DÙNG images.length
+          if (loadedPosts < total) {
+            setPage((prev) => prev + 1)
+          }
+        }
+      },
+      { threshold: 1, rootMargin: "200px" }
+    )
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [loadedPosts, total, loadingMore]) // 🆕 deps dùng loadedPosts thay vì images
 
   // 🟢 Gom và xếp hashtag theo tần suất
   const hashtagCounts: Record<string, number> = {}
@@ -56,7 +106,6 @@ export function ImageGallery() {
   const sortedHashtags = Object.keys(hashtagCounts).sort(
     (a, b) => hashtagCounts[b] - hashtagCounts[a]
   )
-
   const categories = ["Tất cả", ...sortedHashtags]
 
   // 🟢 Filter theo category + search
@@ -66,9 +115,9 @@ export function ImageGallery() {
         ? true
         : (img.category || []).includes(selectedCategory)
 
-    const matchContent = img.content.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchContent = (img.content || "").toLowerCase().includes(searchTerm.toLowerCase())
     const matchHashtag = (img.category || []).some((tag: string) =>
-      tag.toLowerCase().includes(searchTerm.toLowerCase())
+      (tag || "").toLowerCase().includes(searchTerm.toLowerCase())
     )
 
     return matchCategory && (matchContent || matchHashtag)
@@ -113,11 +162,11 @@ export function ImageGallery() {
       </div>
 
       {/* Masonry Grid */}
-      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4 relative z-10">
+      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 relative z-10">
         {filteredImages.map((image) => (
           <Card
             key={image.id}
-            className="break-inside-avoid cursor-pointer group overflow-hidden hover:shadow-lg transition-all duration-300"
+            className="mb-4 break-inside-avoid cursor-pointer group overflow-hidden hover:shadow-lg transition-all duration-300"
             onClick={() => setSelectedImage(image)}
           >
             <div className="relative overflow-hidden">
@@ -139,6 +188,12 @@ export function ImageGallery() {
             </div>
           </Card>
         ))}
+      </div>
+
+      {/* Loader */}
+      <div ref={loaderRef} className="py-10 text-center text-sm text-muted-foreground">
+        {loadingMore && loadedPosts < total && <p>Đang tải thêm ảnh…</p>} {/* 🆕 */}
+        {loadedPosts >= total && <p>Đã hiển thị tất cả ảnh.</p>}            {/* 🆕 */}
       </div>
 
       {/* Lightbox */}

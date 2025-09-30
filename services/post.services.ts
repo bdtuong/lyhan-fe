@@ -20,10 +20,7 @@ function buildQuery(params: Record<string, any>) {
 
 // 🟢 Lấy danh sách posts với phân trang (mặc định ẩn pending)
 export async function getPosts(
-  page = 1,
-  pageSize = 10,
-  options?: { includePending?: boolean }
-) {
+page = 1, pageSize = 10, options?: { includePending?: boolean} , p0?: any) {
   const qs = buildQuery({
     page,
     pageSize,
