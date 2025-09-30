@@ -15,7 +15,7 @@ export function Footer() {
         {/* Logo + desc */}
         <div className="space-y-3">
           <h2 className="text-3xl font-extrabold tracking-wide bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 bg-clip-text text-transparent">
-            Lyhan
+            LYHAN
           </h2>
           <p className="text-sm leading-relaxed text-gray-400">
             Official fan project.
