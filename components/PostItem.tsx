@@ -1,15 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
-import { Heart, MessageCircle, Share } from "lucide-react"
+import { Heart, MessageCircle, Share, VolumeX, Volume2 } from "lucide-react"
 import { useUserInfo } from "@/hooks/useUserInfo"
 import { decodeJWT } from "@/utils/jwt"
 import { toggleLike } from "@/services/post.services"
 import { CommentModal } from "./CommentModal"
 import { Lightbox, LightboxImage } from "@/components/lightbox"
-import toast from "react-hot-toast" // 👈 dùng react-hot-toast
+import toast from "react-hot-toast"
 
 type Props = {
   post: any
@@ -25,8 +25,35 @@ export function PostItem({ post, actionsSlot }: Props) {
   const [likes, setLikes] = useState<number>(post.likes?.length || 0)
   const [liked, setLiked] = useState<boolean>(post.likes?.includes(userId) || false)
   const [showModal, setShowModal] = useState(false)
-
   const [selectedImage, setSelectedImage] = useState<LightboxImage | null>(null)
+  const [isMuted, setIsMuted] = useState(true)
+
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+
+  // Auto play when in viewport
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {})
+          } else {
+            video.pause()
+          }
+        })
+      },
+      { threshold: 0.75 }
+    )
+
+    observer.observe(video)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
 
   const handleToggleLike = async () => {
     if (!userId || !token) return
@@ -40,9 +67,7 @@ export function PostItem({ post, actionsSlot }: Props) {
   }
 
   const handleShareClick = () => {
-    toast("🚧 Tính năng chia sẻ sẽ sớm có mặt!", {
-      duration: 2200
-    })
+    toast("🚧 Tính năng chia sẻ sẽ sớm có mặt!", { duration: 2200 })
   }
 
   const images: string[] =
@@ -82,14 +107,32 @@ export function PostItem({ post, actionsSlot }: Props) {
                 </p>
               </div>
             </Link>
-
-            {/* slot cho menu ngoài truyền vào */}
             {actionsSlot}
           </div>
 
           {/* Content */}
           {post.content && (
             <div className="mb-3 whitespace-pre-line text-sm break-words">{post.content}</div>
+          )}
+
+          {/* Video */}
+          {post.video?.url && (
+            <div className="mb-3 relative">
+              <video
+                ref={videoRef}
+                src={post.video.url}
+                muted={isMuted}
+                controls={false}
+                playsInline
+                className="w-full rounded-lg object-cover"
+              />
+              <button
+                onClick={() => setIsMuted((prev) => !prev)}
+                className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white p-1 rounded-full"
+              >
+                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              </button>
+            </div>
           )}
 
           {/* Images */}
@@ -201,7 +244,7 @@ export function PostItem({ post, actionsSlot }: Props) {
             </button>
             <button
               className="flex items-center gap-1 hover:text-primary transition-colors"
-              onClick={handleShareClick} // 👈 toast "coming soon"
+              onClick={handleShareClick}
             >
               <Share className="w-4 h-4" />
               Chia sẻ
@@ -210,10 +253,7 @@ export function PostItem({ post, actionsSlot }: Props) {
         </CardContent>
       </Card>
 
-      {/* Comment Modal */}
       {showModal && <CommentModal postId={post._id} onClose={() => setShowModal(false)} />}
-
-      {/* Lightbox */}
       {selectedImage && (
         <Lightbox
           image={selectedImage}

@@ -7,7 +7,6 @@ function buildQuery(params: Record<string, any>) {
   const q = new URLSearchParams()
   Object.entries(params).forEach(([k, v]) => {
     if (v === undefined || v === null) return
-    // boolean -> "true"/"false"
     q.append(k, typeof v === "boolean" ? String(v) : String(v))
   })
   const s = q.toString()
@@ -20,7 +19,11 @@ function buildQuery(params: Record<string, any>) {
 
 // 🟢 Lấy danh sách posts với phân trang (mặc định ẩn pending)
 export async function getPosts(
-page = 1, pageSize = 10, options?: { includePending?: boolean} , p0?: any) {
+  page = 1,
+  pageSize = 10,
+  options?: { includePending?: boolean },
+  p0?: any
+) {
   const qs = buildQuery({
     page,
     pageSize,
@@ -80,23 +83,21 @@ export async function getPostDetails(
   return res.json()
 }
 
-// 🆕 Search posts (title, content, hashtag, user) (mặc định ẩn pending)
+// 🆕 Search posts
 export async function searchPosts(keyword: string): Promise<any[]> {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL!;
-  const url = `${API_URL}/boards/search/content?` + new URLSearchParams({ q: keyword });
-  const res = await fetch(url, { method: "GET" });
-  if (!res.ok) throw new Error(`Search failed ${res.status}`);
-  const json = await res.json();
-  return Array.isArray(json) ? json : Array.isArray(json?.boards) ? json.boards : [];
+  const API_URL = process.env.NEXT_PUBLIC_API_URL!
+  const url = `${API_URL}/boards/search/content?` + new URLSearchParams({ q: keyword })
+  const res = await fetch(url, { method: "GET" })
+  if (!res.ok) throw new Error(`Search failed ${res.status}`)
+  const json = await res.json()
+  return Array.isArray(json) ? json : Array.isArray(json?.boards) ? json.boards : []
 }
-
-
 
 /** =========================
  *         MUTATIONS
  *  ========================= */
 
-// 🟢 Tạo post mới (mặc định server set isPending=true)
+// 🟢 Tạo post mới
 export async function createPost(
   data: {
     title: string
@@ -105,6 +106,7 @@ export async function createPost(
     content: string
     userId: string
     images?: File[]
+    video?: File
   },
   token?: string
 ) {
@@ -116,7 +118,11 @@ export async function createPost(
   formData.append("userId", data.userId)
 
   if (data.images?.length) {
-    data.images.forEach((img) => formData.append("images", img))
+    data.images.forEach((img) => formData.append("files", img)) // ✅ dùng "files"
+  }
+
+  if (data.video) {
+    formData.append("files", data.video) // ✅ thêm video
   }
 
   const res = await fetch(API_URL, {
@@ -150,16 +156,19 @@ export async function deletePost(postId: string, token: string) {
   return res.json()
 }
 
-// 🟢 Update post (content/images)
+// 🟢 Update post (ảnh, content, video)
 export async function updatePost(
   postId: string,
   token: string,
-  data: { content?: string; images?: File[] }
+  data: { content?: string; images?: File[]; video?: File }
 ) {
   const formData = new FormData()
   if (data.content) formData.append("content", data.content)
   if (data.images?.length) {
-    data.images.forEach((img) => formData.append("images", img))
+    data.images.forEach((img) => formData.append("files", img)) // ✅ đổi key
+  }
+  if (data.video) {
+    formData.append("files", data.video) // ✅ thêm video
   }
 
   const res = await fetch(`${API_URL}/update-post/${postId}`, {
@@ -177,7 +186,6 @@ export async function updatePost(
  *       MODERATION (Admin)
  *  ========================= */
 
-// 🆕 Duyệt bài: đặt isPending=false
 export async function approvePost(postId: string, token: string) {
   const res = await fetch(`${API_URL}/${encodeURIComponent(postId)}/approve`, {
     method: "PATCH",
@@ -188,7 +196,6 @@ export async function approvePost(postId: string, token: string) {
   return json
 }
 
-// 🆕 Đặt trạng thái pending tuỳ ý
 export async function setPending(postId: string, isPending: boolean, token: string) {
   const res = await fetch(`${API_URL}/${encodeURIComponent(postId)}/pending`, {
     method: "PATCH",

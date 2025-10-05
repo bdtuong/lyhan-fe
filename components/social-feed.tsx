@@ -5,7 +5,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { ImagePlus, X, Smile, Plus, ShieldCheck } from "lucide-react"
+import {
+  ImagePlus,
+  Video as VideoIcon,
+  X,
+  Smile,
+  Plus,
+  ShieldCheck
+} from "lucide-react"
 import { decodeJWT } from "@/utils/jwt"
 import { getUser } from "@/services/auth.services"
 import { getPosts, createPost, approvePost } from "@/services/post.services"
@@ -22,6 +29,7 @@ type Post = {
   userID?: string
   userInfo?: any
   isPending?: boolean
+  video?: { url: string }
   [k: string]: any
 }
 
@@ -29,6 +37,7 @@ export function FanSocialPage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [newContent, setNewContent] = useState("")
   const [newImages, setNewImages] = useState<File[]>([])
+  const [newVideo, setNewVideo] = useState<File | null>(null)
   const [posting, setPosting] = useState(false)
   const [showEmoji, setShowEmoji] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -46,7 +55,6 @@ export function FanSocialPage() {
 
   const [approvingIds, setApprovingIds] = useState<Record<string, boolean>>({})
 
-  // 🔒 Prevent layout shift when modal opens
   useEffect(() => {
     document.body.style.overflow = showCreateModal ? "hidden" : ""
   }, [showCreateModal])
@@ -124,13 +132,15 @@ export function FanSocialPage() {
           language: "en",
           content: newContent,
           userId,
-          images: newImages
+          images: newImages,
+          video: newVideo || undefined
         },
         token
       )
       setPosts((prev) => (isAdmin ? [newPost, ...prev] : prev))
       setNewContent("")
       setNewImages([])
+      setNewVideo(null)
       setShowCreateModal(false)
       toast.success("Post created successfully and is awaiting approval.")
     } catch (err) {
@@ -218,17 +228,13 @@ export function FanSocialPage() {
         </div>
       </main>
 
-      {/* Floating + button */}
       <button
         onClick={() => setShowCreateModal(true)}
-        className="fixed bottom-20 right-6 z-50 w-14 h-14 rounded-xl bg-white text-black hover:bg-neutral-200 shadow-md border border-white/20 flex items-center justify-center transition-colors duration-200 transform translate-y-0"
-        aria-label="Create post"
-        title="Create post"
+        className="fixed bottom-20 right-6 z-50 w-14 h-14 rounded-xl bg-white text-black hover:bg-neutral-200 shadow-md border border-white/20 flex items-center justify-center"
       >
         <Plus className="w-6 h-6" />
       </button>
 
-      {/* Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
@@ -237,7 +243,7 @@ export function FanSocialPage() {
               <h2 className="font-semibold text-lg text-white">Create Post</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="w-8 h-8 rounded-full hover:bg-neutral-800/50 flex items-center justify-center text-neutral-400 hover:text-white transition-colors"
+                className="w-8 h-8 rounded-full hover:bg-neutral-800/50 flex items-center justify-center text-neutral-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -251,21 +257,7 @@ export function FanSocialPage() {
                 placeholder="Write your thoughts about Lyhan..."
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
-                className="
-                  min-h-32 
-                  bg-transparent 
-                  border-white/20 
-                  text-white 
-                  placeholder:text-neutral-400 
-                  resize-none 
-
-                  focus:outline-none 
-                  focus:ring-[0.5px] 
-                  focus:ring-white/40 
-                  focus:border-white/30 
-                  focus-visible:ring-white/40 
-                  focus-visible:border-white/30
-                "
+                className="min-h-32 bg-transparent border-white/20 text-white placeholder:text-neutral-400 resize-none focus:ring-white/40"
               />
               {newImages.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -279,7 +271,7 @@ export function FanSocialPage() {
                       <button
                         type="button"
                         onClick={() => setNewImages(newImages.filter((_, idx) => idx !== i))}
-                        className="absolute -top-2 -right-2 bg-black/80 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute -top-2 -right-2 bg-black/80 text-white rounded-full p-1 opacity-0 group-hover:opacity-100"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -287,6 +279,22 @@ export function FanSocialPage() {
                   ))}
                 </div>
               )}
+              {newVideo && (
+                  <div className="relative group mt-3">
+                    <video
+                      src={URL.createObjectURL(newVideo)}
+                      controls
+                      className="w-full max-h-72 object-cover rounded-lg border border-white/20"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setNewVideo(null)}
+                      className="absolute -top-2 -right-2 bg-black/80 text-white rounded-full p-1 opacity-0 group-hover:opacity-100"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               {showEmoji && (
                 <div className="border border-white/20 rounded-lg overflow-hidden">
                   <EmojiPicker onEmojiClick={onEmojiClick} width="100%" />
@@ -296,15 +304,11 @@ export function FanSocialPage() {
             <div className="p-4 border-t border-white/20">
               <div className="flex justify-between items-center">
                 <div className="flex gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowEmoji(!showEmoji)}
-                    className="flex items-center gap-2 text-neutral-400 hover:text-white transition-colors"
-                  >
+                  <button onClick={() => setShowEmoji(!showEmoji)} className="text-neutral-400 hover:text-white flex items-center gap-2">
                     <Smile className="w-5 h-5" />
                     <span className="text-sm hidden sm:inline">Emoji</span>
                   </button>
-                  <label className="flex items-center gap-2 cursor-pointer text-neutral-400 hover:text-white transition-colors">
+                  <label className="flex items-center gap-2 cursor-pointer text-neutral-400 hover:text-white">
                     <ImagePlus className="w-5 h-5" />
                     <span className="text-sm hidden sm:inline">Image</span>
                     <Input
@@ -319,11 +323,24 @@ export function FanSocialPage() {
                       }
                     />
                   </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-neutral-400 hover:text-white">
+                    <VideoIcon className="w-5 h-5" />
+                    <span className="text-sm hidden sm:inline">Video</span>
+                    <Input
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) setNewVideo(file)
+                      }}
+                    />
+                  </label>
                 </div>
                 <Button
                   onClick={handlePost}
                   disabled={posting || !newContent.trim()}
-                  className="bg-white text-black hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed border-0"
+                  className="bg-white text-black hover:bg-neutral-200"
                 >
                   {posting ? "Posting..." : "Post"}
                 </Button>
