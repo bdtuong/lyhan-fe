@@ -3,15 +3,48 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { gsap } from "gsap";
 
-const useMedia = (queries: string[], values: number[], defaultValue: number): number => {
-  const get = () => values[queries.findIndex(q => matchMedia(q).matches)] ?? defaultValue;
-  const [value, setValue] = useState<number>(get);
+const useMedia = (
+  queries: string[],
+  values: number[],
+  defaultValue: number
+): number => {
+  const isClient =
+    typeof window !== "undefined" && typeof window.matchMedia === "function";
+
+  // Đừng gọi matchMedia khi SSR: dùng defaultValue
+  const [value, setValue] = useState<number>(() => {
+    if (!isClient) return defaultValue;
+    const idx = queries.findIndex((q) => window.matchMedia(q).matches);
+    return values[idx] ?? defaultValue;
+  });
 
   useEffect(() => {
-    const handler = () => setValue(get);
-    queries.forEach(q => matchMedia(q).addEventListener("change", handler));
-    return () => queries.forEach(q => matchMedia(q).removeEventListener("change", handler));
-  }, [queries]);
+    if (!isClient) return;
+
+    const mqls = queries.map((q) => window.matchMedia(q));
+
+    const handler = () => {
+      const idx = mqls.findIndex((m) => m.matches);
+      setValue(values[idx] ?? defaultValue);
+    };
+
+    // Cập nhật lần đầu sau mount
+    handler();
+
+    // Lắng nghe thay đổi
+    mqls.forEach((m) => {
+      if (m.addEventListener) m.addEventListener("change", handler);
+      else m.addListener(handler); // fallback Safari cũ
+    });
+
+    return () => {
+      mqls.forEach((m) => {
+        if (m.removeEventListener) m.removeEventListener("change", handler);
+        else m.removeListener(handler);
+      });
+    };
+    // stringify arrays để tránh phụ thuộc tham chiếu
+  }, [isClient, JSON.stringify(queries), JSON.stringify(values), defaultValue]);
 
   return value;
 };
