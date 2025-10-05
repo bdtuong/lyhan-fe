@@ -114,7 +114,17 @@ function PostCard({ post }: { post: Post }) {
         hover:scale-[1.015] hover:border-white/20 hover:shadow-white/10
       "
     >
-      {post.images?.[0] && (
+      {post.video?.url ? (
+        <div className="relative aspect-[4/5] w-full overflow-hidden">
+          <video
+            src={post.video.url}
+            className="h-full w-full object-cover"
+            muted
+            playsInline
+            preload="metadata"
+          />
+        </div>
+      ) : post.images?.[0] ? (
         <div className="relative aspect-[4/5] w-full overflow-hidden">
           <img
             src={post.images[0]}
@@ -122,7 +132,8 @@ function PostCard({ post }: { post: Post }) {
             className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
           />
         </div>
-      )}
+      ) : null}
+
 
       <div className="p-2.5 space-y-1.5">
         <div className="flex items-center justify-between text-[11px] text-gray-400">
