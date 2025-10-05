@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -61,18 +61,8 @@ export function MusicPlayer() {
 
   const isMobile = useIsMobile()
   const outerRef = useRef<HTMLDivElement>(null)
-
   const [pos, setPos] = useState<Pos>({ x: 16, y: 16 })
-  const dragStateRef = useRef<{
-    startX: number
-    startY: number
-    originX: number
-    originY: number
-    maxX: number
-    maxY: number
-    dragging: boolean
-  } | null>(null)
-
+  const dragStateRef = useRef<any>(null)
   const SIZE_STEPS = isMobile ? MOBILE_SIZES : DESKTOP_SIZES
   const [sizeIndex, setSizeIndex] = useState<number>(() => {
     if (typeof window === "undefined") return 1
@@ -83,27 +73,25 @@ export function MusicPlayer() {
   })
 
   const width = SIZE_STEPS[sizeIndex]
-  const canZoomOut = sizeIndex > 0
-  const canZoomIn = sizeIndex < SIZE_STEPS.length - 1
-
   const containerRef = useRef<HTMLDivElement>(null)
   const playerRef = useRef<any>(null)
   const [ready, setReady] = useState(false)
   const embedId = currentSong?.youtubeId
-  const title = currentSong?.title ?? "Chưa chọn bài hát"
+  const title = currentSong?.title ?? "No song selected"
 
-  // Save state
+  const [autoNext, setAutoNext] = useState(true)
+
   useEffect(() => localStorage.setItem(VISIBLE_KEY, String(visible)), [visible])
   useEffect(() => localStorage.setItem(SIZE_KEY, String(sizeIndex)), [sizeIndex])
   useEffect(() => localStorage.setItem(POS_KEY, JSON.stringify(pos)), [pos])
 
-  // YouTube
   useEffect(() => {
     if (!containerRef.current) return
     let mounted = true
     ;(async () => {
       await loadYouTubeApi()
       if (!mounted) return
+
       if (!playerRef.current) {
         playerRef.current = new window.YT.Player(containerRef.current, {
           videoId: embedId,
@@ -121,18 +109,19 @@ export function MusicPlayer() {
             },
             onStateChange: (e: any) => {
               if (e.data === 1) setIsPlaying(true)
-              if (e.data === 0) nextSong()
+              if (e.data === 0 && autoNext) nextSong()
             },
           },
         })
-      } else if (embedId) {
+      } else if (embedId && playerRef.current.getVideoData().video_id !== embedId) {
         playerRef.current.loadVideoById(embedId)
       }
     })()
+
     return () => {
       mounted = false
     }
-  }, [embedId, nextSong, setIsPlaying])
+  }, [embedId, nextSong, setIsPlaying, autoNext])
 
   useEffect(() => {
     const player = playerRef.current
@@ -142,7 +131,6 @@ export function MusicPlayer() {
     } catch {}
   }, [isPlaying, ready])
 
-  // Drag toàn bộ player
   useEffect(() => {
     const dragEl = outerRef.current
     if (!dragEl) return
@@ -205,36 +193,36 @@ export function MusicPlayer() {
     }
   }, [])
 
-  const thumbSrc = useMemo(
-    () =>
-      embedId
-        ? `https://img.youtube.com/vi/${embedId}/maxresdefault.jpg`
-        : "",
-    [embedId]
-  )
-
   const playRandom = () => {
     const rand = playlist[Math.floor(Math.random() * playlist.length)]
     playSong(rand)
   }
 
-  // Render
+  if (typeof window !== "undefined" && !width) {
+    return (
+      <div className="fixed bottom-4 right-4 z-[9999] text-xs text-white/50">
+        Loading player...
+      </div>
+    )
+  }
+
   return (
     <>
       {!visible && (
         <button
           onClick={() => setVisible(true)}
-          className="fixed bottom-4 right-4 z-[9999] px-4 h-11 bg-blue-600 text-white rounded-full shadow-lg flex items-center gap-2 hover:bg-blue-500"
+          className="fixed bottom-4 right-4 z-[9999] flex items-center gap-2 px-4 py-2.5
+            rounded-full bg-white/10 backdrop-blur border border-white/20 text-white
+            hover:bg-white/20 transition-all duration-200"
         >
-          <Music className="w-4 h-4" /> {isMobile ? "Player" : "Mở player"}
+          <Music className="w-4 h-4" />
+          <span className="text-sm font-medium">Open Player</span>
         </button>
       )}
 
       <div
         ref={outerRef}
-        className={`fixed z-[9999] transition-opacity ${
-          visible ? "" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed z-[9999] transition-opacity ${visible ? "" : "opacity-0 pointer-events-none"}`}
         style={{
           left: pos.x,
           top: pos.y,
@@ -242,72 +230,68 @@ export function MusicPlayer() {
           maxWidth: isMobile ? "calc(100vw - 16px)" : "none",
         }}
       >
-        <Card className="border border-blue-500/20 bg-gradient-to-r from-[#050b1a]/95 to-[#0b2245]/95 text-white backdrop-blur-md shadow-lg">
-          <CardContent className="p-3">
-            {/* Header */}
-            <div className="flex justify-end items-center mb-3">
+        <Card className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl text-white w-full">
+          <CardContent className="p-4 space-y-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-base md:text-lg font-semibold truncate max-w-[220px]">
+                  {title}
+                </h3>
+                <p className="text-xs text-white/60">
+                  {currentSong?.artist ?? "No song selected"}
+                </p>
+              </div>
               <div className="flex gap-1">
-                <Button
-                  disabled={!canZoomOut}
-                  onClick={() => setSizeIndex((i) => i - 1)}
-                >
-                  <Minus />
+                <Button variant="ghost" size="icon" disabled={sizeIndex <= 0} onClick={() => setSizeIndex(i => i - 1)} className="hover:bg-white/20">
+                  <Minus className="w-4 h-4" />
                 </Button>
-                <Button
-                  disabled={!canZoomIn}
-                  onClick={() => setSizeIndex((i) => i + 1)}
-                >
-                  <Plus />
+                <Button variant="ghost" size="icon" disabled={sizeIndex >= SIZE_STEPS.length - 1} onClick={() => setSizeIndex(i => i + 1)} className="hover:bg-white/20">
+                  <Plus className="w-4 h-4" />
                 </Button>
-                <Button onClick={() => setVisible(false)}>
-                  <X />
+                <Button variant="ghost" size="icon" onClick={() => setVisible(false)} className="hover:bg-white/20">
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Info */}
-            <div className="text-center mb-3">
-              <h3 className="font-semibold">{title}</h3>
-              <p className="text-sm text-blue-200/70">
-                {currentSong?.artist ?? "Chọn bài hát"}
-              </p>
-            </div>
-
-            {/* Controls */}
-            <div className="flex justify-center gap-2 mb-3">
-              <Button onClick={previousSong}>
-                <SkipBack />
-              </Button>
+            <div className="relative w-full pt-[56.25%] rounded-md overflow-hidden border border-white/10">
               {currentSong ? (
-                <Button onClick={() => setIsPlaying(!isPlaying)}>
-                  {isPlaying ? <Pause /> : <Play />}
-                </Button>
+                <div ref={containerRef} className="absolute inset-0 w-full h-full" />
               ) : (
-                <Button onClick={playRandom}>
-                  <Shuffle /> Ngẫu nhiên
-                </Button>
-              )}
-              <Button onClick={nextSong}>
-                <SkipForward />
-              </Button>
-            </div>
-
-            {/* Player */}
-            <div className="relative w-full pt-[56.25%] rounded overflow-hidden ring-1 ring-blue-500/20">
-              {currentSong ? (
-                <div
-                  ref={containerRef}
-                  className="absolute inset-0 w-full h-full"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-sm text-blue-200">
-                  Chưa có bài nào
+                <div className="absolute inset-0 flex items-center justify-center text-sm text-white/60">
+                  No song selected
                 </div>
               )}
             </div>
 
-            <p className="text-center text-xs text-blue-200/60 mt-3">
-              Đang phát từ YouTube • quảng cáo (nếu có) vẫn do YouTube chèn.
+            <div className="flex justify-center items-center gap-4 flex-wrap">
+              <Button variant="ghost" size="icon" onClick={previousSong} className="hover:bg-white/20 sm:w-10 sm:h-10 md:w-12 md:h-12">
+                <SkipBack className="w-5 h-5" />
+              </Button>
+              {currentSong ? (
+                <Button variant="ghost" size="icon" onClick={() => setIsPlaying(!isPlaying)} className="rounded-full bg-white/20 hover:bg-white/30 sm:w-10 sm:h-10 md:w-12 md:h-12">
+                  {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                </Button>
+              ) : (
+                <Button variant="ghost" onClick={playRandom} className="gap-2 text-sm hover:bg-white/10 px-3 py-2">
+                  <Shuffle className="w-4 h-4" /> Shuffle
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" onClick={nextSong} className="hover:bg-white/20 sm:w-10 sm:h-10 md:w-12 md:h-12">
+                <SkipForward className="w-5 h-5" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                onClick={() => setAutoNext(v => !v)}
+                className="text-xs text-white/70 hover:bg-white/10 px-3 py-2"
+              >
+                {autoNext ? "Auto-Next: On" : "Auto-Next: Off"}
+              </Button>
+            </div>
+
+            <p className="text-center text-xs text-white/50">
+              Streaming from YouTube • Ads (if any) are inserted by YouTube.
             </p>
           </CardContent>
         </Card>

@@ -1,211 +1,215 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import Image from "next/image"
-import { Card } from "@/components/ui/card"
-import { Lightbox, LightboxImage } from "@/components/lightbox"
-import { Search } from "lucide-react"
-import { getPosts } from "@/services/post.services"
+import { useState, useEffect, useRef } from "react";
+import { Search } from "lucide-react";
+import { getPosts } from "@/services/post.services";
+import Masonry from "@/components/ui/masonry-grid";
+import { Lightbox } from "@/components/lightbox";
 
 export function ImageGallery() {
-  const [images, setImages] = useState<LightboxImage[]>([])
-  const [selectedImage, setSelectedImage] = useState<LightboxImage | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<string>("Tất cả")
-  const [searchTerm, setSearchTerm] = useState("")
+  const [images, setImages] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedImage, setSelectedImage] = useState<any | null>(null);
 
-  // ✅ Infinite scroll states
-  const [page, setPage] = useState(1)
-  const [pageSize] = useState(12)
-  const [total, setTotal] = useState(0)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const loaderRef = useRef<HTMLDivElement | null>(null)
+  // Infinite scroll states
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(12);
+  const [total, setTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
+  const [loadedPosts, setLoadedPosts] = useState(0);
 
-  const [loadedPosts, setLoadedPosts] = useState(0) // 🆕 đếm SỐ BÀI đã tải
-
-  // ✅ Hàm xử lý mọi dạng dữ liệu ảnh
-  const extractImageUrls = (post: any): string[] => {
-    let raw = post.images || post.imageUrl || []
-
-    if (typeof raw === "string") return [raw]
-    if (!Array.isArray(raw)) raw = [raw]
-
-    return raw
-      .map((img: any) => {
-        if (!img) return null
-        if (typeof img === "string") return img
-        if (typeof img === "object") return img.url || img.src || img.link || null
-        return null
-      })
-      .filter((src: string): src is string => typeof src === "string" && src.trim() !== "")
+  // helper: get natural image size
+  async function getImageSize(src: string): Promise<{ width: number; height: number }> {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      img.src = src;
+      img.onload = () => {
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+    });
   }
 
-  // ✅ Fetch post theo page
+  // fetch posts
   useEffect(() => {
-    let cancel = false
-    setLoadingMore(true)
+    let cancel = false;
+    setLoadingMore(true);
 
     getPosts(page, pageSize)
-      .then((res) => {
-        if (cancel) return
-        const posts = res.boards || res || []
+      .then(async (res) => {
+        if (cancel) return;
+        const posts = res.boards || res || [];
 
-        const mapped: LightboxImage[] = posts.flatMap((post: any) => {
-          const imgs = extractImageUrls(post)
-          return imgs.map((img, index) => ({
-            id: `${post._id}-${index}`,
-            src: img,
-            alt: post.content || "Không có nội dung",
-            content: post.content || "Chưa có nội dung",
-            category: post.hashtags || [],
-          }))
-        })
+        const mapped = await Promise.all(
+          posts.flatMap(async (post: any) => {
+            const raw = post.images || post.imageUrl || [];
+            const arr = Array.isArray(raw) ? raw : [raw];
+            const valid = arr.filter(Boolean);
 
-        setImages((prev) => (page === 1 ? mapped : [...prev, ...mapped]))
-        setTotal(res.totalCount || 0)
+            return Promise.all(
+              valid.map(async (src: string, index: number) => {
+                const { width, height } = await getImageSize(src);
+                return {
+                  id: `${post._id}-${index}`,
+                  img: src, // used for Masonry
+                  url: "#",
+                  content: post.content || "",
+                  category: post.hashtags || [],
+                  width,
+                  height,
+                };
+              })
+            );
+          })
+        );
 
-        setLoadedPosts((prev) => (page === 1 ? posts.length : prev + posts.length)) // 🆕
-        // (Optional an toàn): nếu API không ổn định, trang trả < pageSize coi như hết
-        // if (!res.totalCount && posts.length < pageSize) setTotal(page === 1 ? posts.length : (prev + posts.length))
+        const flat = mapped.flat();
+        setImages((prev) => (page === 1 ? flat : [...prev, ...flat]));
+        setTotal(res.totalCount || 0);
+        setLoadedPosts((prev) => (page === 1 ? posts.length : prev + posts.length));
       })
-      .catch((err) => console.error("❌ Lỗi load posts:", err))
-      .finally(() => setLoadingMore(false))
+      .finally(() => setLoadingMore(false));
 
     return () => {
-      cancel = true
-    }
-  }, [page, pageSize])
+      cancel = true;
+    };
+  }, [page, pageSize]);
 
-  // ✅ IntersectionObserver để tự load tiếp
+  // intersection observer
   useEffect(() => {
-    const target = loaderRef.current
-    if (!target) return
+    const target = loaderRef.current;
+    if (!target) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        const first = entries[0]
+        const first = entries[0];
         if (first.isIntersecting && !loadingMore) {
-          // 🆕 SO SÁNH THEO SỐ BÀI, KHÔNG DÙNG images.length
           if (loadedPosts < total) {
-            setPage((prev) => prev + 1)
+            setPage((prev) => prev + 1);
           }
         }
       },
       { threshold: 1, rootMargin: "200px" }
-    )
-    observer.observe(target)
-    return () => observer.disconnect()
-  }, [loadedPosts, total, loadingMore]) // 🆕 deps dùng loadedPosts thay vì images
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [loadedPosts, total, loadingMore]);
 
-  // 🟢 Gom và xếp hashtag theo tần suất
-  const hashtagCounts: Record<string, number> = {}
+  // hashtag filter
+  const hashtagCounts: Record<string, number> = {};
   images.forEach((img) => {
-    ;(img.category || []).forEach((tag: string) => {
-      hashtagCounts[tag] = (hashtagCounts[tag] || 0) + 1
-    })
-  })
+    (img.category || []).forEach((tag: string) => {
+      hashtagCounts[tag] = (hashtagCounts[tag] || 0) + 1;
+    });
+  });
 
   const sortedHashtags = Object.keys(hashtagCounts).sort(
     (a, b) => hashtagCounts[b] - hashtagCounts[a]
-  )
-  const categories = ["Tất cả", ...sortedHashtags]
+  );
+  const categories = ["All", ...sortedHashtags];
 
-  // 🟢 Filter theo category + search
   const filteredImages = images.filter((img) => {
     const matchCategory =
-      selectedCategory === "Tất cả"
+      selectedCategory === "All"
         ? true
-        : (img.category || []).includes(selectedCategory)
+        : (img.category || []).includes(selectedCategory);
 
-    const matchContent = (img.content || "").toLowerCase().includes(searchTerm.toLowerCase())
+    const matchContent = (img.content || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchHashtag = (img.category || []).some((tag: string) =>
       (tag || "").toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    );
 
-    return matchCategory && (matchContent || matchHashtag)
-  })
+    return matchCategory && (matchContent || matchHashtag);
+  });
 
   return (
     <section className="relative mt-4">
-      {/* Search bar */}
-      <div className="flex justify-center mb-6 relative z-10">
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+      {/* Search + Filter */}
+      <div className="max-w-6xl mx-auto mb-8 px-4">
+        {/* Search full width */}
+        <div className="relative w-full mb-4">
+          {/* Icon Search */}
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 w-5 h-5 z-10" />
+
+          {/* Input */}
           <input
             type="text"
-            placeholder="Tìm kiếm khoảnh khắc hoặc hashtag..."
+            placeholder="Search for photos or hashtags..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg bg-muted text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-12 pr-4 py-3 rounded-xl 
+                      bg-white/5 backdrop-blur-md text-white 
+                      placeholder-gray-400 
+                      focus:outline-none focus:ring-2 focus:white
+                      shadow-lg transition-all duration-200"
           />
+        </div>
+
+        {/* Hashtag chips */}
+        <div className="flex flex-wrap gap-2">
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                selectedCategory === category
+                  ? "bg-white text-black shadow"
+                  : "bg-white/10 text-gray-200 hover:bg-blue-500/20"
+              }`}
+            >
+              {category}
+              {category !== "All" && (
+                <span className="ml-1 text-xs opacity-70">
+                  {hashtagCounts[category] || 0}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Category Filter */}
-      <div className="flex flex-wrap justify-center gap-2 mb-8 relative z-10">
-        {categories.map((category) => (
-          <button
-            key={category}
-            onClick={() => setSelectedCategory(category)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              selectedCategory === category
-                ? "bg-blue-600 text-white"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            {category}{" "}
-            {category !== "Tất cả" && (
-              <span className="ml-1 text-xs opacity-70">
-                {hashtagCounts[category] || 0}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
       {/* Masonry Grid */}
-      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 relative z-10">
-        {filteredImages.map((image) => (
-          <Card
-            key={image.id}
-            className="mb-4 break-inside-avoid cursor-pointer group overflow-hidden hover:shadow-lg transition-all duration-300"
-            onClick={() => setSelectedImage(image)}
-          >
-            <div className="relative overflow-hidden">
-              <Image
-                src={image.src || "/placeholder.svg"}
-                alt={image.alt}
-                width={400}
-                height={300}
-                className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-end">
-                <div className="p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                  <h3 className="font-semibold text-sm">{image.content}</h3>
-                  <p className="text-xs opacity-80">
-                    {(image.category || []).join(" ")}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+      <Masonry
+        items={filteredImages}
+        animateFrom="bottom"
+        ease="power3.out"
+        duration={0.6}
+        stagger={0.05}
+        scaleOnHover
+        blurToFocus
+        colorShiftOnHover
+        onItemClick={(item) =>
+          setSelectedImage({
+            id: item.id,
+            src: item.img,          // convert img -> src for Lightbox
+            alt: item.content || "",
+            content: item.content,
+            category: item.category || [],
+          })
+        }
+      />
 
       {/* Loader */}
       <div ref={loaderRef} className="py-10 text-center text-sm text-muted-foreground">
-        {loadingMore && loadedPosts < total && <p>Đang tải thêm ảnh…</p>} {/* 🆕 */}
-        {loadedPosts >= total && <p>Đã hiển thị tất cả ảnh.</p>}            {/* 🆕 */}
+        {loadingMore && loadedPosts < total && <p>Loading more photos…</p>}
       </div>
 
       {/* Lightbox */}
       {selectedImage && (
         <Lightbox
           image={selectedImage}
-          images={filteredImages}
+          images={filteredImages.map((img) => ({
+            id: img.id,
+            src: img.img,
+            alt: img.content || "",
+            content: img.content,
+            category: img.category || [],
+          }))}
           onClose={() => setSelectedImage(null)}
           onNext={(nextImage) => setSelectedImage(nextImage)}
           onPrevious={(prevImage) => setSelectedImage(prevImage)}
         />
       )}
     </section>
-  )
+  );
 }

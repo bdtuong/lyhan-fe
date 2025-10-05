@@ -1,80 +1,57 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import LiquidGlass from "@/components/ui/liquid-glass";
+import Link from "next/link"
+import LiquidGlass from "@/components/ui/liquid-glass"
 
 export function GallerySection() {
   const imageClass =
-    "w-56 h-80 object-cover rounded-xl shadow-xl relative overflow-hidden";
+    "w-full object-cover rounded-lg shadow-xl relative overflow-hidden max-h-[400px]"
+
+  const images = [
+    { src: "/gallery-landing-page/gs1.jpg", alt: "Lyhan performance 1" },
+    { src: "/gallery-landing-page/gs2.jpg", alt: "Lyhan performance 2" },
+    { src: "/gallery-landing-page/gs3.jpg", alt: "Lyhan performance 3" },
+    { src: "/gallery-landing-page/gs4.jpg", alt: "Lyhan performance 4" },
+    { src: "/music-section/ms3.jpg", alt: "Lyhan performance 5" },
+    { src: "/gallery-landing-page/gs7.jpg", alt: "Lyhan performance 7" },
+  ]
 
   return (
-    <section className="py-20 text-white relative overflow-hidden">
-      <div className="mx-auto max-w-7xl px-6 flex flex-col lg:flex-row items-center justify-center gap-48">
-        {/* Text */}
-        <div className="relative max-w-md px-6 py-8 rounded-xl">
-          <h2 className="text-3xl font-serif font-bold text-white mb-4">
-            Cùng nhìn lại <span className="gradient-text">LYHAN</span> sau mỗi hành trình
-          </h2>
-          <p className="text-gray-300 text-base leading-relaxed mb-8">
-            Mỗi sân khấu mà LYHAN đặt chân, mỗi lần giọng ca cất lên đều hóa thành
-            những khoảnh khắc lấp lánh, đáng để ghi dấu trong tim. Bộ sưu tập này lưu giữ
-            không chỉ hình ảnh, mà còn cả những cảm xúc thăng hoa trên từng chặng đường
-            nghệ thuật của LYHAN.
+    <section className="py-16 sm:py-20 text-white relative overflow-hidden">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col-reverse lg:flex-row items-center justify-center gap-12 sm:gap-16 lg:gap-24">
+        {/* 🖼 Masonry Image Grid — hidden on mobile */}
+        <div
+          className="hidden md:block w-full lg:w-[60%] columns-1 sm:columns-2 md:columns-3 gap-4 space-y-4"
+          aria-hidden="true"
+        >
+          {images.map((img, index) => (
+            <div key={index} className="glow-frame break-inside-avoid">
+              <img src={img.src} alt={img.alt} className={imageClass} />
+            </div>
+          ))}
+        </div>
+
+        {/* 📄 Text Block — centered on mobile, right on lg */}
+        <div className="w-full lg:w-[40%] max-w-xl px-2 sm:px-4 py-4 lg:py-8 text-center lg:text-right mx-auto lg:mx-0">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-4 leading-tight">
+            Gallery.
+          </h1>
+          <p className="text-gray-300 text-base sm:text-lg leading-relaxed mb-8">
+            Find every image about LYHAN and her magical stage moments.
           </p>
 
-          {/* CTA button */}
-          <Link href="/gallery" className="relative z-10 inline-block w-48">
+          <Link href="/gallery" className="inline-block">
             <LiquidGlass
-              className="text-center py-3 text-lg font-semibold cursor-pointer hover:scale-105 transition-transform"
-              cornerRadius={16}
-              blurAmount={0.15}
-              displacementScale={35}
-              elasticity={0.2}
+              className="inline-block px-5 py-2.5 sm:px-6 sm:py-3 text-center text-white font-medium text-base sm:text-lg rounded-full hover:scale-105 transition-transform"
+              blurAmount={0.1}
+              displacementScale={20}
+              elasticity={0.15}
             >
-              Đi thoi →
+              View all
             </LiquidGlass>
           </Link>
         </div>
-
-        {/* Images */}
-        <div className="relative flex items-center justify-center gap-10">
-          {/* Cột trái lệch xuống */}
-          <div className="flex flex-col gap-10 mt-36">
-            <div className="glow-frame">
-              <img
-                src="/gallery-landing-page/lh-g-1.jpg"
-                alt="Lyhan performance 1"
-                className={imageClass}
-              />
-            </div>
-            <div className="glow-frame">
-              <img
-                src="/gallery-landing-page/lh-g-2.jpg"
-                alt="Lyhan performance 2"
-                className={imageClass}
-              />
-            </div>
-          </div>
-
-          {/* Cột phải */}
-          <div className="flex flex-col gap-10">
-            <div className="glow-frame">
-              <img
-                src="/gallery-landing-page/lh-g-3.jpg"
-                alt="Lyhan performance 3"
-                className={imageClass}
-              />
-            </div>
-            <div className="glow-frame">
-              <img
-                src="/gallery-landing-page/lh-g-4.jpg"
-                alt="Lyhan performance 4"
-                className={imageClass}
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </section>
-  );
+  )
 }

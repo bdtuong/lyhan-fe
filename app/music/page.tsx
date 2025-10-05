@@ -3,28 +3,12 @@ import { Playlist } from "@/components/playlist"
 
 export default function MusicPage() {
   return (
-    <div
-      className="min-h-screen bg-top bg-repeat"
-      style={{
-        backgroundImage: "url('/background.jpg')",
-        backgroundSize: "100% auto",
-      }}
-    >
-      <div className="container mx-auto px-4 py-8 mt-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12 text-white">
-            <h1 className="text-2xl md:text-5xl font-bold mb-4">🎶 Góc Âm Nhạc 🎶</h1>
-            <p className="text-lg text-white/80">
-              Cùng lắng nghe những bài hát hay nhất của Lyhan nhaaa 💕✨
-            </p>
-          </div>
-
-          <div className="space-y-8">
-            <Playlist />
-            {/* <MusicPlayer /> */}
-          </div>
-        </div>
+    <div className="w-full min-h-screen text-white">
+      <div className="px-4 sm:px-6 md:px-8 py-8 mt-16">
+        <Playlist />
+        {/* <MusicPlayer /> */}
       </div>
     </div>
   )
 }
+

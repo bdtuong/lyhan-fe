@@ -6,7 +6,6 @@ import "./globals.css"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Suspense } from "react"
-import { MouseEffect } from "@/components/ui/mouse-effect"
 import { AuthProvider } from "@/context/AuthContext"
 import { MusicPlayer } from "@/components/music-player"
 import { Toaster } from "react-hot-toast" // 👈 thêm import
@@ -24,7 +23,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">
-      <body className={`font-sans ${beVietnam.variable} bg-black`}>
+      <body
+        className={`font-sans ${beVietnam.variable} bg-black overflow-x-hidden max-w-full`}
+      >
         <AuthProvider>
           <Suspense fallback={<div>Loading...</div>}>
             <Navigation />
@@ -36,7 +37,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Global utilities */}
         <Analytics />
         <MusicPlayer />
-        <MouseEffect />
 
         {/* 🔔 Toasts hiển thị toàn cục */}
         <Toaster

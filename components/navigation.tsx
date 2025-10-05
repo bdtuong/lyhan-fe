@@ -18,19 +18,17 @@ import { useAuth } from "@/context/AuthContext"
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
+  { href: "/socials", label: "Socials", icon: Users },
   { href: "/music", label: "Music", icon: Music },
   { href: "/gallery", label: "Gallery", icon: ImageIcon },
-  { href: "/editor", label: "Custom", icon: Wand2 },
-  // moved out of Media dropdown 👇
-  { href: "/socials", label: "Socials", icon: Users },
   { href: "/events", label: "Events", icon: Calendar },
+  { href: "/editor", label: "Custom", icon: Wand2 },
 ]
 
 export function Navigation() {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
   const [showNav, setShowNav] = useState(true)
-
   const [openUserMenu, setOpenUserMenu] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -39,7 +37,6 @@ export function Navigation() {
 
   const { user, setUser } = useAuth()
 
-  // hide/show on scroll + scrolled style
   useEffect(() => {
     let ticking = false
     const onScroll = () => {
@@ -61,37 +58,35 @@ export function Navigation() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  // click outside to close user dropdown
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setOpenUserMenu(false)
       }
     }
-    window.addEventListener("mousedown", handleClickOutside)
-    return () => window.removeEventListener("mousedown", handleClickOutside)
+    window.addEventListener("click", handleClickOutside) // ✅ Sửa từ mousedown → click
+    return () => window.removeEventListener("click", handleClickOutside)
   }, [])
 
   return (
     <nav
       className={cn(
-        "fixed top-0 left-0 w-full z-50 transition-all duration-300 backdrop-blur-xl text-white pt-[env(safe-area-inset-top)]",
-        "supports-[backdrop-filter]:bg-slate-900/45 bg-slate-900/55 border-b border-white/10",
-        scrolled ? "shadow-lg py-2" : "py-3",
+        "fixed top-0 left-0 w-full z-50 transition-all duration-300 pt-[env(safe-area-inset-top)]",
+        "bg-black/40 backdrop-blur-md border-b border-white/10 shadow-lg shadow-white/10 hover:shadow-white/20",
+        scrolled ? "py-2" : "py-3",
         showNav ? "translate-y-0" : "-translate-y-full"
       )}
     >
-      <div className="container mx-auto px-4">
+      <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 overflow-visible">
         <div className="flex items-center justify-between">
-          {/* Logo */}
           <Link
             href="/"
-            className="text-2xl font-extrabold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent"
+            className="text-2xl font-extrabold text-white tracking-wide pl-2 lg:pl-4 transition-transform hover:scale-105"
           >
-            LYHAN
+            LYHANVERSE
           </Link>
 
-          {/* Desktop nav (lg and up) */}
+          {/* Desktop nav */}
           <div className="hidden lg:flex items-center space-x-4">
             {navItems.map((item) => {
               const Icon = item.icon
@@ -102,12 +97,12 @@ export function Navigation() {
                   href={item.href}
                   className={cn(
                     "relative flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors group",
-                    active ? "text-blue-300" : "text-gray-200/85 hover:text-blue-300"
+                    active ? "text-white" : "text-white/80 hover:text-white"
                   )}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
-                  <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-blue-400/80 transition-all duration-300 group-hover:w-full" />
+                  <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-white transition-all duration-300 group-hover:w-full" />
                 </Link>
               )
             })}
@@ -116,13 +111,13 @@ export function Navigation() {
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setOpenUserMenu((prev) => !prev)}
-                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-white/10 text-gray-200/90 hover:text-blue-300 transition"
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-white/80 hover:text-white hover:bg-white/10 transition"
               >
                 {user?.avatar ? (
                   <img
                     src={user.avatar}
                     alt="Avatar"
-                    className="w-7 h-7 rounded-full object-cover border border-slate-600"
+                    className="w-7 h-7 rounded-full object-cover border border-white/20"
                   />
                 ) : (
                   <User className="w-5 h-5" />
@@ -134,12 +129,12 @@ export function Navigation() {
               </button>
 
               {openUserMenu && (
-                <div className="absolute right-0 mt-2 w-44 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-md shadow-lg py-1 text-sm">
+                <div className="absolute right-0 mt-2 w-44 bg-black/90 backdrop-blur-xl border border-white/10 rounded-md shadow-lg py-1 text-sm z-50">
                   {user ? (
                     <>
                       <Link
                         href={`/profile/${user._id || user.id}`}
-                        className="block px-4 py-2 hover:bg-white/5 text-gray-200"
+                        className="block px-4 py-2 hover:bg-white/5 text-white/90"
                         onClick={() => setOpenUserMenu(false)}
                       >
                         Profile
@@ -159,14 +154,14 @@ export function Navigation() {
                     <>
                       <Link
                         href="/auth/login"
-                        className="block px-4 py-2 hover:bg-white/5 text-gray-200"
+                        className="block px-4 py-2 hover:bg-white/5 text-white/90"
                         onClick={() => setOpenUserMenu(false)}
                       >
                         Login
                       </Link>
                       <Link
                         href="/auth/register"
-                        className="block px-4 py-2 hover:bg-white/5 text-gray-200"
+                        className="block px-4 py-2 hover:bg-white/5 text-white/90"
                         onClick={() => setOpenUserMenu(false)}
                       >
                         Register
@@ -178,10 +173,10 @@ export function Navigation() {
             </div>
           </div>
 
-          {/* Mobile button (<lg) */}
-          <div className="lg:hidden">
+          {/* Mobile toggle */}
+          <div className="lg:hidden shrink-0 z-50">
             <button
-              className="p-2 rounded-md text-gray-200/90 hover:text-blue-300 hover:bg-white/10"
+              className="p-2 rounded-md text-white/80 hover:text-white hover:bg-white/10"
               aria-label="Toggle Menu"
               onClick={() => setMobileOpen((v) => !v)}
             >
@@ -197,10 +192,10 @@ export function Navigation() {
           </div>
         </div>
 
-        {/* Mobile menu panel (<lg) */}
+        {/* Mobile menu */}
         {mobileOpen && (
-          <div className="lg:hidden mt-3 pb-3 border-t border-white/10">
-            <div className="flex flex-col gap-1 pt-3">
+          <div className="lg:hidden mt-3 pb-4 border-t border-white/10">
+            <div className="flex flex-col gap-2 pt-4 px-3">
               {navItems.map((item) => {
                 const Icon = item.icon
                 const active = pathname === item.href || pathname.startsWith(item.href + "/")
@@ -209,8 +204,8 @@ export function Navigation() {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-md",
-                      active ? "text-blue-300 bg-white/5" : "text-gray-200/90 hover:text-white hover:bg-white/5"
+                      "flex items-center gap-3 px-4 py-3 rounded-lg text-base",
+                      active ? "text-white bg-white/10" : "text-white/80 hover:text-white hover:bg-white/5"
                     )}
                     onClick={() => setMobileOpen(false)}
                   >
@@ -221,19 +216,32 @@ export function Navigation() {
               })}
             </div>
 
-            {/* Mobile auth quick actions */}
-            <div className="mt-3 border-t border-white/10 pt-3">
+            <div className="mt-4 border-t border-white/10 pt-4 px-4 flex flex-col gap-3">
               {user ? (
-                <div className="flex items-center justify-between px-3">
+                <>
+                  <div className="flex items-center gap-3">
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt="Avatar"
+                        className="w-8 h-8 rounded-full object-cover border border-white/20"
+                      />
+                    ) : (
+                      <User className="w-5 h-5 text-white/80" />
+                    )}
+                    <span className="text-white/90 text-sm">{user.username || "User"}</span>
+                  </div>
+
                   <Link
                     href={`/profile/${user._id || user.id}`}
-                    className="text-gray-200 hover:text-white"
+                    className="text-white/80 hover:text-white text-sm"
                     onClick={() => setMobileOpen(false)}
                   >
                     Profile
                   </Link>
+
                   <button
-                    className="text-red-400 hover:text-red-300"
+                    className="text-left text-red-400 hover:text-red-300 text-sm"
                     onClick={() => {
                       localStorage.removeItem("token")
                       setUser(null)
@@ -242,19 +250,19 @@ export function Navigation() {
                   >
                     Log out
                   </button>
-                </div>
+                </>
               ) : (
-                <div className="flex items-center gap-3 px-3">
+                <div className="flex flex-col gap-2">
                   <Link
                     href="/auth/login"
-                    className="text-gray-200 hover:text-white"
+                    className="text-white/80 hover:text-white text-sm"
                     onClick={() => setMobileOpen(false)}
                   >
                     Login
                   </Link>
                   <Link
                     href="/auth/register"
-                    className="text-gray-200 hover:text-white"
+                    className="text-white/80 hover:text-white text-sm"
                     onClick={() => setMobileOpen(false)}
                   >
                     Register

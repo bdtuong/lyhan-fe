@@ -1,134 +1,99 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { getEvents } from "@/services/event.services"
+import { type Event } from "@/hooks/useEvents"
+import Carousel, { type CarouselItem } from "@/components/ui/carousel"
+import { Calendar } from "lucide-react"
 import Link from "next/link"
-import {
-  CalendarDays,
-  Ticket,
-  MapPin,
-  Clock,
-  PartyPopper,
-  type LucideIcon,
-} from "lucide-react"
 import LiquidGlass from "@/components/ui/liquid-glass"
-import { memo } from "react"
-
-/* ---------- Floating Icon: delay theo prop ---------- */
-const FloatingIcon = memo(function FloatingIcon({
-  Icon,
-  className,
-  delay = 0,
-  title,
-}: {
-  Icon: LucideIcon
-  className?: string
-  delay?: number
-  title?: string
-}) {
-  return (
-    <Icon
-      className={`pointer-events-none float-anim motion-reduce:!animate-none ${className || ""}`}
-      style={{ animationDelay: `${delay}s` }}
-      aria-hidden={!title}
-    />
-  )
-})
 
 export function EventsSection() {
+  const [items, setItems] = useState<CarouselItem[]>([])
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await getEvents()
+        const events = (res.events || [])
+          .filter((e) => e.createdAt)
+          .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+          .slice(0, 3)
+
+        const mapped: CarouselItem[] = events.map((event, i) => {
+          const start = new Date(event.startTime)
+          const end = new Date(event.endTime)
+          const image = event.images?.[0] || ""
+
+          return {
+            id: i,
+            title: event.title,
+            description: [
+              start.toLocaleDateString("en-GB", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+              }),
+              `${start.toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit"
+              })} - ${end.toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit"
+              })}`,
+              event.location
+            ]
+              .filter(Boolean)
+              .join(" • "),
+            icon: <Calendar className="w-4 h-4 text-white" />,
+            image
+          }
+        })
+
+        setItems(mapped)
+      } catch (error) {
+        console.error("❌ Failed to fetch events:", error)
+      }
+    }
+
+    fetchEvents()
+  }, [])
+
   return (
-    <section
-      className="
-        relative overflow-hidden text-white
-        py-12 sm:py-16 md:py-20
-        min-h-[75svh] md:min-h-screen
-        flex items-center justify-center
-      "
-    >
-      <div className="w-full max-w-3xl text-center relative px-4 sm:px-6">
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold mb-4 sm:mb-6 leading-tight">
-          Theo dõi sự kiện của <span className="gradient-text"> LYHAN</span> cùng tụi mình nhaaa
-        </h2>
+    <section className="w-full px-4 sm:px-6 max-w-7xl mx-auto py-16 sm:py-20 min-h-[70vh] flex flex-col items-center justify-center text-white text-center">
+      {/* Title */}
+      <h2 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight mb-4">
+        Events
+      </h2>
 
-        <p className="text-gray-300 text-sm sm:text-base lg:text-lg leading-relaxed mb-4 sm:mb-6">
-          Đừng bỏ lỡ bất kỳ khoảnh khắc nào trong hành trình âm nhạc của LYHAN. 
-          Tại đây, bạn sẽ tìm thấy lịch trình các buổi diễn, fan-meeting và những sự kiện đặc biệt.
-        </p>
+      {/* Subtitle */}
+      <p className="text-gray-400 text-sm sm:text-base mb-12 sm:mb-14 max-w-md sm:max-w-xl">
+        Stay updated with the latest events from your favorite artist and fans.
+      </p>
 
-        <p className="text-gray-400 text-sm sm:text-base leading-relaxed mb-6 sm:mb-8">
-          Cập nhật liên tục để bạn có thể đồng hành cùng LYHAN ở mọi chặng đường và ghi dấu những kỷ niệm khó quên.
-        </p>
+      {/* Carousel */}
+      {items.length === 0 ? (
+        <p className="text-gray-500">No upcoming events available.</p>
+      ) : (
+        <div className="w-full max-w-[90vw] sm:max-w-2xl lg:max-w-4xl">
+          <Carousel items={items} autoplay loop pauseOnHover baseWidth={420} />
+        </div>
+      )}
 
-        {/* CTA button */}
-        <Link href="/events" className="inline-block w-[11rem] sm:w-48">
+      {/* CTA Button */}
+      <div className="mt-10 sm:mt-12">
+        <Link href="/events" className="inline-block">
           <LiquidGlass
-            className="
-              text-center py-2.5 sm:py-3 text-base sm:text-lg font-semibold
-              cursor-pointer transition-transform
-              hover:scale-[1.03] active:scale-[0.99]
-              motion-reduce:transition-none motion-reduce:hover:scale-100
-            "
-            cornerRadius={14}
-            blurAmount={0.12}
-            displacementScale={28}
-            elasticity={0.18}
+            className="inline-block px-5 py-2.5 sm:px-6 sm:py-3 text-center text-white font-medium text-base sm:text-lg rounded-full hover:scale-105 transition-transform"
+            blurAmount={0.1}
+            displacementScale={20}
+            elasticity={0.15}
           >
-            Khám phá ngay →
+            See all events
           </LiquidGlass>
         </Link>
-
-        {/* Floating icons */}
-        <FloatingIcon
-          Icon={CalendarDays}
-          className="text-blue-400 w-9 h-9 sm:w-10 sm:h-10 absolute -top-10 sm:-top-12 right-8 opacity-90"
-          delay={0}
-          title="Lịch sự kiện"
-        />
-        <FloatingIcon
-          Icon={Ticket}
-          className="text-cyan-400 w-10 h-10 sm:w-12 sm:h-12 absolute top-1/2 -right-12 sm:-right-20 opacity-90"
-          delay={1}
-          title="Vé sự kiện"
-        />
-        <FloatingIcon
-          Icon={MapPin}
-          className="hidden sm:block text-blue-300 w-9 h-9 absolute -top-4 -left-10 opacity-90"
-          delay={2}
-          title="Địa điểm"
-        />
-        <FloatingIcon
-          Icon={Clock}
-          className="hidden md:block text-blue-200 w-7 h-7 absolute bottom-8 -left-10 opacity-90"
-          delay={1.5}
-          title="Thời gian"
-        />
-        <FloatingIcon
-          Icon={PartyPopper}
-          className="hidden sm:block text-cyan-300 w-8 h-8 absolute bottom-0 -right-8 opacity-90"
-          delay={2.5}
-          title="Không khí"
-        />
       </div>
-
-      {/* Styles: animation */}
-      <style jsx global>{`
-        @keyframes float {
-          0%,
-          100% {
-            transform: translateY(0) rotate(0);
-          }
-          50% {
-            transform: translateY(-12px) rotate(5deg);
-          }
-        }
-        .float-anim {
-          animation: float 5s ease-in-out infinite;
-          will-change: transform;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .float-anim {
-            animation: none !important;
-          }
-        }
-      `}</style>
     </section>
   )
 }

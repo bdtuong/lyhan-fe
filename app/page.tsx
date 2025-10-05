@@ -14,7 +14,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
+      <div className="min-h-screen flex items-center justify-center bg-black-900">
         <LyhanLoading size="lg" color="blue" />
       </div>
     )
@@ -25,15 +25,16 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-slate-950 relative">
+    <div className="min-h-screen w-full bg-black-950 relative">
+      {/* Background glow */}
       <div
         className="absolute inset-0 z-0"
         style={{
           backgroundImage: `
             radial-gradient(circle at 50% 50%, 
-              rgba(203, 213, 225, 0.12) 0%, 
-              rgba(203, 213, 225, 0.07) 25%, 
-              rgba(203, 213, 225, 0.03) 35%, 
+              rgba(241, 241, 241, 0.12) 0%,    /* ~black-50 */
+              rgba(219, 219, 219, 0.07) 25%,   /* ~black-100 */
+              rgba(186, 186, 186, 0.04) 35%,   /* ~black-200 */
               transparent 50%
             )
           `,
@@ -41,12 +42,11 @@ export default function HomePage() {
         }}
       />
 
-      <div className="relative z-10 space-y-0">
+      <div className="relative z-10 space-y-0 text-black-50">
         <HeroSection />
         <SocialSection />
         <MusicSection />
         <GallerySection />
-        
         <EventsSection />
       </div>
     </div>

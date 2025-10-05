@@ -1,100 +1,99 @@
 "use client"
 
-import Link from "next/link"
-import LiquidGlass from "@/components/ui/liquid-glass"
-import { Music } from "lucide-react"
 import { motion } from "framer-motion"
-
-const songs = [
-  { title: "Rơi tự do", thumbnail: "/thumbs/rtd.jpg", href: "/music/song1" },
-  { title: "Nhân danh tình yêu", thumbnail: "/thumbs/ndty.jpg", href: "/music/song2" },
-  { title: "WELCOME HOME", thumbnail: "/thumbs/wh.jpg", href: "/music/song3" },
-]
+import LiquidGlass from "@/components/ui/liquid-glass"
+import Image from "next/image"
+import Link from "next/link"
 
 export function MusicSection() {
   return (
-    <section
-      className="min-h-screen flex flex-col md:flex-row items-center justify-center gap-12 overflow-hidden py-12 px-4"
-    >
-      {/* Ảnh với ambient glow */}
+    <section className="w-full min-h-screen flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 px-4 sm:px-6 lg:px-20 py-16 text-white">
+      {/* 📄 TEXT */}
       <motion.div
-        initial={{ rotateX: -90, opacity: 0 }}
-        whileInView={{ rotateX: 0, opacity: 1 }}
-        transition={{ duration: 1.5, ease: "easeOut" }}
-        viewport={{ once: true, amount: 0.3 }}
-        className="relative w-full md:w-1/2 flex justify-center [transform-origin:top]"
+        initial={{ opacity: 0, x: -30 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        transition={{ duration: 1.2 }}
+        viewport={{ once: true }}
+        className="flex-1 flex flex-col justify-center text-center md:text-left space-y-6"
       >
-        {/* Ambient glow background */}
-        <div className="absolute inset-0 flex items-center justify-center z-0">
-          <div className="w-[350px] h-[350px] md:w-[500px] md:h-[500px] rounded-full bg-gradient-radial from-blue-500/30 to-transparent blur-3xl" />
-        </div>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold">Music.</h1>
 
-        {/* Image */}
-        <img
-          src="/lh-1.png"
-          alt="Music"
-          className="relative z-10 max-h-[60vh] md:max-h-[80vh] w-auto object-contain rounded-2xl shadow-lg"
-        />
-      </motion.div>
+        <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-md mx-auto md:mx-0">
+          Explore the soundscapes that move your soul. <br />
+          Music isn't just sound — it's emotion.
+        </p>
 
-      {/* Box lớn + Box nhỏ */}
-      <motion.div
-        initial={{ x: 200, opacity: 0 }}
-        whileInView={{ x: 0, opacity: 1 }}
-        transition={{ duration: 1.5, ease: "easeOut" }}
-        viewport={{ once: true, amount: 0.3 }}
-        className="w-full md:w-1/2 flex flex-col items-center gap-6"
-      >
-        {/* Box lớn (giữ Link) */}
-        <Link href="/music" className="w-full md:w-4/5">
-          <LiquidGlass
-            className="p-6 md:p-8 text-left cursor-pointer flex flex-col items-start"
-            cornerRadius={24}
-            blurAmount={0.15}
-            displacementScale={40}
-            elasticity={0.2}
-          >
-            <div className="flex items-center gap-4 mb-4 md:mb-6">
-              <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-700 rounded-full flex items-center justify-center">
-                <Music className="w-6 h-6 md:w-8 md:h-8 text-white" />
-              </div>
-              <h3 className="text-2xl md:text-3xl font-semibold group-hover:text-primary transition-colors">
-                Nghe nhạc cùng LYHAN
-              </h3>
-            </div>
-            <p className="text-white/80 text-base md:text-lg leading-relaxed">
-              Bước vào thế giới âm nhạc của LYHAN, nơi giai điệu dịu dàng và sâu lắng khẽ
-              ngân – không chỉ để nghe, mà để chạm đến trái tim.
-            </p>
+        <blockquote className="italic text-white/70 text-sm sm:text-base md:text-lg max-w-md mx-auto md:mx-0">
+          “Music is my true devotion — if ever faced between death and music, I would choose music every time.”
+        </blockquote>
+
+        <Link href="/music">
+          <LiquidGlass className="inline-block px-5 py-2.5 sm:px-6 sm:py-3 rounded-full mt-2 hover:scale-105 transition-transform">
+            <span className="text-white font-medium text-sm sm:text-base md:text-lg">
+              Listen Now
+            </span>
           </LiquidGlass>
         </Link>
+      </motion.div>
 
-        {/* Các box nhỏ — ẨN trên mobile, hiện từ md trở lên (đÃ BỎ LINK) */}
-        <div className="hidden md:grid w-full md:w-4/5 grid-cols-1 gap-4">
-          {songs.map((song) => (
-            <div key={song.title}>
-              <LiquidGlass
-                className="group relative p-4 flex items-center justify-center h-full"
-                cornerRadius={16}
-                blurAmount={0.1}
-                displacementScale={25}
-                elasticity={0.15}
-              >
-                {/* Thumbnail + title ngang nhau, ở giữa */}
-                <div className="flex items-center gap-4">
-                  <img
-                    src={song.thumbnail}
-                    alt={song.title}
-                    className="w-12 h-12 md:w-14 md:h-14 rounded-md object-cover"
-                  />
-                  <span className="text-base md:text-lg font-medium">
-                    {song.title}
-                  </span>
-                </div>
-              </LiquidGlass>
-            </div>
-          ))}
-        </div>
+      {/* 🖼 IMAGES — hidden on mobile */}
+      <motion.div
+        initial={{ opacity: 0, x: 30 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        transition={{ duration: 1.2, delay: 0.2 }}
+        viewport={{ once: true }}
+        className="hidden md:flex flex-1 flex-col sm:flex-row items-center justify-center gap-6"
+      >
+        {/* Image 1 */}
+        <LiquidGlass
+          className="w-28 sm:w-36 md:w-44 h-40 sm:h-48 md:h-52 p-2 rounded-xl transition-transform hover:scale-105 glow-animate-1"
+          cornerRadius={16}
+          blurAmount={0.1}
+          displacementScale={20}
+          elasticity={0.15}
+        >
+          <Image
+            src="/music-section/ms1.jpg"
+            alt="Image 1"
+            width={176}
+            height={208}
+            className="w-full h-full object-cover rounded-md"
+          />
+        </LiquidGlass>
+
+        {/* Image 2 */}
+        <LiquidGlass
+          className="w-28 sm:w-36 md:w-44 h-52 sm:h-60 md:h-64 p-2 rounded-xl transition-transform hover:scale-105 glow-animate-2"
+          cornerRadius={16}
+          blurAmount={0.1}
+          displacementScale={20}
+          elasticity={0.15}
+        >
+          <Image
+            src="/music-section/ms2.jpg"
+            alt="Image 2"
+            width={176}
+            height={256}
+            className="w-full h-full object-cover rounded-md"
+          />
+        </LiquidGlass>
+
+        {/* Image 3 */}
+        <LiquidGlass
+          className="w-28 sm:w-36 md:w-44 h-64 sm:h-72 md:h-80 p-2 rounded-xl transition-transform hover:scale-105 glow-animate-3"
+          cornerRadius={16}
+          blurAmount={0.1}
+          displacementScale={20}
+          elasticity={0.15}
+        >
+          <Image
+            src="/music-section/ms3.jpg"
+            alt="Image 3"
+            width={176}
+            height={320}
+            className="w-full h-full object-cover rounded-md"
+          />
+        </LiquidGlass>
       </motion.div>
     </section>
   )
