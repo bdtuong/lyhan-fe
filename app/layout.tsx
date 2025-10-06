@@ -17,7 +17,7 @@ const beVietnam = Be_Vietnam_Pro({
 })
 
 export const metadata: Metadata = {
-  title: "LYHAN Mini Social Media",
+  title: "LYHANVERSE",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
