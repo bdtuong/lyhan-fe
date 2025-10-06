@@ -152,9 +152,6 @@ function PostCard({ post }: { post: Post }) {
           <button className="hover:text-blue-400 transition-colors">
             <MessageCircle size={14} />
           </button>
-          <button className="hover:text-green-400 transition-colors">
-            <Share2 size={14} />
-          </button>
         </div>
       </div>
     </div>

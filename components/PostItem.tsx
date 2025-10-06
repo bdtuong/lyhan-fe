@@ -243,13 +243,6 @@ export function PostItem({ post, actionsSlot }: Props) {
               <MessageCircle className="w-4 h-4" />
               {post.commentsCount || 0}
             </button>
-            <button
-              className="flex items-center gap-1 hover:text-primary transition-colors"
-              onClick={handleShareClick}
-            >
-              <Share className="w-4 h-4" />
-              Chia sẻ
-            </button>
           </div>
         </CardContent>
       </Card>
