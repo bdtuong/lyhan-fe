@@ -230,9 +230,15 @@ export function FanSocialPage() {
 
       <button
         onClick={() => setShowCreateModal(true)}
-        className="fixed bottom-20 right-6 z-50 w-14 h-14 rounded-xl bg-white text-black hover:bg-neutral-200 shadow-md border border-white/20 flex items-center justify-center"
+        className="
+          fixed bottom-20 right-4 z-50
+          w-11 h-11 sm:w-14 sm:h-14
+          rounded-xl bg-white text-black
+          hover:bg-neutral-200 shadow-md border border-white/20
+          flex items-center justify-center
+        "
       >
-        <Plus className="w-6 h-6" />
+        <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
 
       {showCreateModal && (
@@ -284,6 +290,9 @@ export function FanSocialPage() {
                     <video
                       src={URL.createObjectURL(newVideo)}
                       controls
+                      loop
+                      muted
+                      playsInline
                       className="w-full max-h-72 object-cover rounded-lg border border-white/20"
                     />
                     <button

@@ -96,15 +96,6 @@ export function Footer() {
         </div>
       </div>
 
-      <Button
-        onClick={scrollToTop}
-        className="fixed bottom-[9.5rem] right-8 rounded-2xl p-4 bg-white text-black 
-                  hover:bg-zinc-200 shadow-2xl hover:scale-110 transition-all duration-300 
-                  border-0 group"
-      >
-        <ChevronUp className="w-5 h-5 group-hover:-translate-y-1 transition-transform duration-300" />
-      </Button>
-
     </footer>
   )
 }

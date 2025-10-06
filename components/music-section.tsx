@@ -14,7 +14,7 @@ export function MusicSection() {
         whileInView={{ opacity: 1, x: 0 }}
         transition={{ duration: 1.2 }}
         viewport={{ once: true }}
-        className="flex-1 flex flex-col justify-center text-center md:text-left space-y-6"
+        className="flex-1 flex flex-col justify-center text-center md:text-left space-y-6 md:pl-12 lg:pl-20"
       >
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold">Music.</h1>
 

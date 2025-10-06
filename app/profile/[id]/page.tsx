@@ -2,14 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useParams } from "next/navigation"
-import {
-  Loader2,
-  Camera,
-  MoreVertical,
-  Trash2,
-  Edit3,
-  X,
-} from "lucide-react"
+import { Loader2, Camera, MoreVertical, Trash2, Edit3, X } from "lucide-react"
 import { decodeJWT } from "@/utils/jwt"
 import { getUser, uploadAvatar } from "@/services/auth.services"
 import { getUserPosts, updatePost, deletePost } from "@/services/post.services"
@@ -71,19 +64,26 @@ export default function ProfilePage() {
 
   // dropdown state
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
-  const menuRef = useRef<HTMLDivElement | null>(null)
+
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (!menuRef.current) return
-      if (!(e.target instanceof Node)) return
-      if (!menuRef.current.contains(e.target)) {
-        setOpenMenuId(null)
-      }
+  const handleClickOutside = (e: MouseEvent) => {
+    if (!(e.target instanceof Node)) return
+    const activeMenu = document.querySelector(`[data-menu-id="${openMenuId}"]`)
+    if (activeMenu && !activeMenu.contains(e.target)) {
+      setOpenMenuId(null)
     }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [])
+  }
+
+  if (openMenuId) {
+    document.addEventListener("mousedown", handleClickOutside)
+  }
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside)
+  }
+}, [openMenuId])
+
 
   // fetch user + first page
   useEffect(() => {
@@ -97,16 +97,17 @@ export default function ProfilePage() {
     Promise.all([getUser(profileId, token), getUserPosts(profileId, token, 1, pageSize)])
       .then(([userData, firstPage]) => {
         setUsername(userData.username || "")
-        setAvatarUrl(Array.isArray(userData.avatar) ? userData.avatar[0] : userData.avatar || "")
+        setAvatarUrl(
+          Array.isArray(userData.avatar) ? userData.avatar[0] : userData.avatar || ""
+        )
         const boards = firstPage.boards || []
+        console.log("📌 Initial post IDs:", boards.map((p: { _id: any }) => p._id))
         setPosts(boards)
         setHasMore((firstPage.currentPage || 1) < (firstPage.totalPages || 1))
         setPage(2)
       })
       .finally(() => setLoadingUser(false))
   }, [profileId])
-
-  console.log(avatarUrl)
 
   // infinite scroll
   useEffect(() => {
@@ -125,7 +126,6 @@ export default function ProfilePage() {
     return () => obs.disconnect()
   }, [hasMore, loadingPage])
 
-  
   const loadMore = async () => {
     const token = localStorage.getItem("token")
     if (!token || !profileId) return
@@ -151,12 +151,13 @@ export default function ProfilePage() {
       const data = await uploadAvatar(profileId, file)
       setAvatarUrl(data.avatarUrl)
     } catch {
-      alert("Không thể upload avatar")
+      alert("Unable to upload avatar")
     }
   }
 
   /** ========== Edit Post ========== */
   const startEdit = (post: Post) => {
+    console.log("startEdit", post._id)
     setEditingPost(post)
     setEditContent(post.content || "")
     setKeepOldImages(Array.isArray(post.images) ? post.images : [])
@@ -197,12 +198,12 @@ export default function ProfilePage() {
     try {
       const updated = await updatePost(editingPost._id, token, {
         content: editContent,
-        images: newImages,
+        images: newImages, // keeps API surface consistent with your original code
       })
       setPosts((prev) => prev.map((p) => (p._id === updated._id ? updated : p)))
       setEditingPost(null)
     } catch {
-      alert("Không thể cập nhật bài viết")
+      alert("Unable to update the post")
     } finally {
       setSavingEdit(false)
     }
@@ -222,7 +223,7 @@ export default function ProfilePage() {
       setPosts((prev) => prev.filter((p) => p._id !== deletingPost._id))
       setDeletingPost(null)
     } catch {
-      alert("Không thể xoá bài viết")
+      alert("Unable to delete the post")
     } finally {
       setDeleting(false)
     }
@@ -232,19 +233,19 @@ export default function ProfilePage() {
 
   if (loadingUser) {
     return (
-      <div className="flex items-center justify-center min-h-dvh text-white bg-slate-900">
+      <div className="flex items-center justify-center min-h-dvh text-white bg-black">
         <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="relative min-h-dvh bg-slate-900 text-white bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950">
+    <div className="relative min-h-dvh text-white bg-black">
       <main className="pt-24 pb-24 px-4 sm:px-6">
-        {/* 👇 chỉnh width giống FanSocialPage */}
+        {/* Container width similar to FanSocialPage */}
         <div className="mx-auto max-w-2xl space-y-8 lg:space-y-10">
           {/* Header */}
-          <div className="bg-slate-800/70 backdrop-blur rounded-2xl p-5 sm:p-6 shadow-xl ring-1 ring-slate-700/60">
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-5 sm:p-6 shadow-2xl border border-white/15">
             <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 sm:gap-6">
               <div className="relative">
                 <img
@@ -253,14 +254,14 @@ export default function ProfilePage() {
                     "https://res.cloudinary.com/dn7uzkf7k/image/upload/v1758730740/images_yiv9o4.png"
                   }
                   alt={`${username} avatar`}
-                  className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full object-cover shadow-lg ring-4 ring-cyan-400/30"
+                  className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full object-cover shadow-xl ring-4 ring-white/10"
                 />
                 {loggedInId === profileId && (
                   <>
                     <button
                       onClick={onPickAvatar}
-                      aria-label="Đổi avatar"
-                      className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg ring-4 ring-slate-900"
+                      aria-label="Change avatar"
+                      className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 text-white shadow-lg border border-white/20 backdrop-blur"
                     >
                       <Camera className="w-4 h-4 sm:w-5" />
                     </button>
@@ -276,75 +277,77 @@ export default function ProfilePage() {
               </div>
 
               <div className="text-center sm:text-left">
-                <h1 className="text-2xl sm:text-3xl font-bold text-cyan-300 break-words">
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
                   {username}
                 </h1>
-                <p className="text-gray-400 mt-1">
-                  {loggedInId === profileId ? "Bạn" : "Thành viên Lyhan Fanclub"}
+                <p className="text-white/60 mt-1">
+                  {loggedInId === profileId ? "You" : "Lyhan Fanclub member"}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">Tổng bài viết: {totalCount}</p>
+                <p className="text-xs text-white/40 mt-1">Total posts: {totalCount}</p>
               </div>
             </div>
           </div>
 
           {/* Posts */}
           <section>
-            <h2 className="text-xl font-semibold text-cyan-300 mb-3">Bài viết</h2>
+            <h2 className="text-xl font-semibold text-white mb-3">Posts</h2>
 
             <div className="space-y-6">
               {posts.map((post) => (
                 <PostItem
-                  key={post._id}
-                  post={post}
-                  actionsSlot={
-                    loggedInId === profileId && (
-                      <div className="relative" ref={menuRef}>
-                        <button
-                          className="text-gray-400 hover:text-white p-2 -mr-2"
-                          onClick={() =>
-                            setOpenMenuId(openMenuId === post._id ? null : post._id)
-                          }
-                          aria-haspopup="menu"
-                          aria-expanded={openMenuId === post._id}
-                        >
-                          <MoreVertical className="w-5 h-5" />
-                        </button>
+  key={post._id}
+  post={post}
+  actionsSlot={
+    loggedInId === profileId && (
+      <div className="relative">
+        <button
+          className="text-white/60 hover:text-white p-2 -mr-2"
+          onClick={() =>
+            setOpenMenuId(openMenuId === post._id ? null : post._id)
+          }
+          aria-haspopup="menu"
+          aria-expanded={openMenuId === post._id}
+        >
+          <MoreVertical className="w-5 h-5" />
+        </button>
 
-                        {openMenuId === post._id && (
-                          <div
-                            className="absolute right-0 mt-2 w-44 rounded-lg border border-slate-600/40 bg-slate-800/95 backdrop-blur shadow-xl z-10 overflow-hidden"
-                            role="menu"
-                          >
-                            <button
-                              className="flex items-center w-full px-3 py-2 text-sm hover:bg-slate-700/60"
-                              onClick={() => startEdit(post)}
-                            >
-                              <Edit3 className="w-4 h-4 mr-2" /> Chỉnh sửa
-                            </button>
-                            <button
-                              className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:bg-slate-700/60"
-                              onClick={() => confirmDelete(post)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" /> Xoá bài viết
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  }
-                />
+        {openMenuId === post._id && (
+          <div
+            data-menu-id={post._id} // ✅ Thêm data-attr để outside click biết cái nào
+            className="absolute right-0 mt-2 w-44 rounded-xl border border-white/15 bg-black/70 backdrop-blur-xl shadow-2xl z-10 overflow-hidden"
+            role="menu"
+          >
+            <button
+              className="flex items-center w-full px-3 py-2 text-sm hover:bg-white/5"
+              onClick={() => startEdit(post)}
+            >
+              <Edit3 className="w-4 h-4 mr-2" /> Edit
+            </button>
+            <button
+              className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:bg-white/5"
+              onClick={() => confirmDelete(post)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" /> Delete
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+/>
+
               ))}
             </div>
 
             {/* Infinite sentinel */}
             <div ref={loaderRef} className="flex justify-center py-8">
               {loadingPage ? (
-                <div className="flex items-center gap-2 text-gray-400">
+                <div className="flex items-center gap-2 text-white/60">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Đang tải thêm…</span>
+                  <span>Loading more…</span>
                 </div>
               ) : !hasMore ? (
-                <p className="text-gray-500 text-sm">Đã hết nội dung</p>
+                <p className="text-white/40 text-sm">No more content</p>
               ) : null}
             </div>
           </section>
@@ -365,15 +368,13 @@ export default function ProfilePage() {
       {/* Edit Modal */}
       {editingPost && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4 overflow-y-auto">
-          <div className="bg-slate-800 rounded-2xl p-5 sm:p-6 w-full max-w-2xl shadow-2xl ring-1 ring-slate-700/70 my-8">
+          <div className="bg-black/70 backdrop-blur-xl rounded-2xl p-5 sm:p-6 w-full max-w-2xl shadow-2xl border border-white/15 my-8">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg sm:text-xl font-semibold text-cyan-300">
-                Chỉnh sửa bài viết
-              </h3>
+              <h3 className="text-lg sm:text-xl font-semibold text-white">Edit post</h3>
               <button
-                className="p-2 rounded-lg hover:bg-slate-700/60"
+                className="p-2 rounded-lg hover:bg-white/5"
                 onClick={() => setEditingPost(null)}
-                aria-label="Đóng"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -381,11 +382,11 @@ export default function ProfilePage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Nội dung</label>
+                <label className="block text-sm text-white/70 mb-1">Content</label>
                 <textarea
-                  className="w-full rounded-lg p-3 bg-slate-900 text-white border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-600/40"
+                  className="w-full rounded-lg p-3 bg-black/60 text-white border border-white/15 focus:outline-none focus:ring-2 focus:ring-white/20"
                   rows={5}
-                  placeholder="Nội dung"
+                  placeholder="Write something…"
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
                 />
@@ -395,9 +396,9 @@ export default function ProfilePage() {
               {keepOldImages.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-400">Ảnh hiện có</span>
-                    <span className="text-xs text-gray-500">
-                      {keepOldImages.length} ảnh
+                    <span className="text-sm text-white/70">Existing images</span>
+                    <span className="text-xs text-white/40">
+                      {keepOldImages.length} image(s)
                     </span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -409,9 +410,9 @@ export default function ProfilePage() {
                           alt={`old ${idx + 1}`}
                         />
                         <button
-                          className="absolute top-1 right-1 bg-black/70 hover:bg-black/80 p-1.5 rounded-full text-white opacity-90"
+                          className="absolute top-1 right-1 bg-black/70 hover:bg-black/80 p-1.5 rounded-full text-white"
                           onClick={() => removeOldImage(idx)}
-                          aria-label="Xoá ảnh này"
+                          aria-label="Remove this image"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -423,23 +424,19 @@ export default function ProfilePage() {
 
               {/* New images picker */}
               <div
-                className="rounded-xl border-2 border-dashed border-slate-600/60 hover:border-slate-500 transition p-4 sm:p-5 bg-slate-900/60"
+                className="rounded-xl border-2 border-dashed border-white/20 hover:border-white/30 transition p-4 sm:p-5 bg-white/5"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={onDropFiles}
                 role="region"
-                aria-label="Kéo thả ảnh vào đây"
+                aria-label="Drag & drop images here"
               >
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4">
                   <div className="flex-1 text-center sm:text-left">
-                    <p className="text-sm text-gray-300">
-                      Kéo và thả ảnh vào đây, hoặc
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Hỗ trợ nhiều ảnh. JPG/PNG/GIF.
-                    </p>
+                    <p className="text-sm text-white/80">Drag & drop images here, or</p>
+                    <p className="text-xs text-white/50">Multiple files supported. JPG/PNG/GIF.</p>
                   </div>
-                  <label className="inline-flex items-center px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm cursor-pointer">
-                    Chọn ảnh
+                  <label className="inline-flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm cursor-pointer border border-white/15 backdrop-blur">
+                    Choose images
                     <input
                       type="file"
                       accept="image/*"
@@ -462,7 +459,7 @@ export default function ProfilePage() {
                         <button
                           className="absolute top-1 right-1 bg-black/70 hover:bg-black/80 p-1.5 rounded-full text-white"
                           onClick={() => removeNewImage(idx)}
-                          aria-label="Gỡ ảnh mới này"
+                          aria-label="Remove this new image"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -477,17 +474,17 @@ export default function ProfilePage() {
 
               <div className="flex justify-end gap-3 pt-2">
                 <button
-                  className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500"
+                  className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15"
                   onClick={() => setEditingPost(null)}
                 >
-                  Hủy
+                  Cancel
                 </button>
                 <button
-                  className="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg bg-white text-black hover:opacity-90 disabled:opacity-60"
                   disabled={savingEdit}
                   onClick={saveEdit}
                 >
-                  {savingEdit ? "Đang lưu…" : "Lưu"}
+                  {savingEdit ? "Saving…" : "Save"}
                 </button>
               </div>
             </div>
@@ -498,22 +495,22 @@ export default function ProfilePage() {
       {/* Delete Confirm Modal */}
       {deletingPost && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
-          <div className="bg-slate-800 rounded-xl p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-lg font-semibold text-red-400 mb-4">Xác nhận xoá</h3>
-            <p className="text-gray-300 mb-6">Bạn có chắc chắn muốn xoá bài viết này?</p>
+          <div className="bg-black/70 backdrop-blur-xl rounded-xl p-6 w-full max-w-sm shadow-2xl border border-white/15">
+            <h3 className="text-lg font-semibold text-red-400 mb-4">Delete post?</h3>
+            <p className="text-white/80 mb-6">Are you sure you want to delete this post?</p>
             <div className="flex justify-end gap-3">
               <button
-                className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500"
+                className="px-4 py-2 rounded-lg bg-white/10 hover:bg:white/20 border border-white/15"
                 onClick={() => setDeletingPost(null)}
               >
-                Hủy
+                Cancel
               </button>
               <button
-                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50"
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-60"
                 disabled={deleting}
                 onClick={handleDelete}
               >
-                {deleting ? "Đang xoá…" : "Xoá"}
+                {deleting ? "Deleting…" : "Delete"}
               </button>
             </div>
           </div>

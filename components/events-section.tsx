@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
 import { getEvents } from "@/services/event.services"
 import { type Event } from "@/hooks/useEvents"
 import Carousel, { type CarouselItem } from "@/components/ui/carousel"
@@ -61,7 +62,13 @@ export function EventsSection() {
   }, [])
 
   return (
-    <section className="w-full px-4 sm:px-6 max-w-7xl mx-auto py-16 sm:py-20 min-h-[70vh] flex flex-col items-center justify-center text-white text-center">
+    <motion.section
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 1 }}
+      viewport={{ once: true }}
+      className="w-full px-4 sm:px-6 max-w-7xl mx-auto py-16 sm:py-20 min-h-[70vh] flex flex-col items-center justify-center text-white text-center"
+    >
       {/* Title */}
       <h2 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight mb-4">
         Events
@@ -74,10 +81,16 @@ export function EventsSection() {
 
       {/* Carousel */}
       {items.length === 0 ? (
-        <p className="text-gray-500">No upcoming events available.</p>
+        <div className="text-gray-500 italic">No upcoming events at the moment. Stay tuned!</div>
       ) : (
         <div className="w-full max-w-[90vw] sm:max-w-2xl lg:max-w-4xl">
-          <Carousel items={items} autoplay loop pauseOnHover baseWidth={420} />
+          <Carousel
+            items={items}
+            autoplay={items.length > 1}
+            loop={items.length > 1}
+            pauseOnHover
+            baseWidth={420}
+          />
         </div>
       )}
 
@@ -94,6 +107,6 @@ export function EventsSection() {
           </LiquidGlass>
         </Link>
       </div>
-    </section>
+    </motion.section>
   )
 }

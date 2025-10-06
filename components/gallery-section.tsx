@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import LiquidGlass from "@/components/ui/liquid-glass"
+import { motion } from "framer-motion"
 
 export function GallerySection() {
   const imageClass =
@@ -20,19 +21,45 @@ export function GallerySection() {
     <section className="py-16 sm:py-20 text-white relative overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col-reverse lg:flex-row items-center justify-center gap-12 sm:gap-16 lg:gap-24">
         {/* 🖼 Masonry Image Grid — hidden on mobile */}
-        <div
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          variants={{
+            hidden: {},
+            visible: {
+              transition: {
+                staggerChildren: 0.15,
+                delayChildren: 0.2,
+              },
+            },
+          }}
+          viewport={{ once: true }}
           className="hidden md:block w-full lg:w-[60%] columns-1 sm:columns-2 md:columns-3 gap-4 space-y-4"
           aria-hidden="true"
         >
           {images.map((img, index) => (
-            <div key={index} className="glow-frame break-inside-avoid">
+            <motion.div
+              key={index}
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="glow-frame break-inside-avoid"
+            >
               <img src={img.src} alt={img.alt} className={imageClass} />
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* 📄 Text Block — centered on mobile, right on lg */}
-        <div className="w-full lg:w-[40%] max-w-xl px-2 sm:px-4 py-4 lg:py-8 text-center lg:text-right mx-auto lg:mx-0">
+        <motion.div
+          initial={{ opacity: 0, x: 40 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1 }}
+          viewport={{ once: true }}
+          className="w-full lg:w-[40%] max-w-xl px-2 sm:px-4 py-4 lg:py-8 text-center lg:text-right mx-auto lg:mx-0"
+        >
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-4 leading-tight">
             Gallery.
           </h1>
@@ -50,7 +77,7 @@ export function GallerySection() {
               View all
             </LiquidGlass>
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   )

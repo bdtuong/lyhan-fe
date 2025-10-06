@@ -232,27 +232,45 @@ export function MusicPlayer() {
       >
         <Card className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl rounded-xl text-white w-full">
           <CardContent className="p-4 space-y-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="text-base md:text-lg font-semibold truncate max-w-[220px]">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base md:text-lg font-semibold truncate">
                   {title}
                 </h3>
-                <p className="text-xs text-white/60">
+                <p className="text-xs text-white/60 truncate">
                   {currentSong?.artist ?? "No song selected"}
                 </p>
               </div>
-              <div className="flex gap-1">
-                <Button variant="ghost" size="icon" disabled={sizeIndex <= 0} onClick={() => setSizeIndex(i => i - 1)} className="hover:bg-white/20">
+              <div className="flex-shrink-0 flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={sizeIndex <= 0}
+                  onClick={() => setSizeIndex(i => i - 1)}
+                  className="hover:bg-white/20"
+                >
                   <Minus className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" disabled={sizeIndex >= SIZE_STEPS.length - 1} onClick={() => setSizeIndex(i => i + 1)} className="hover:bg-white/20">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={sizeIndex >= SIZE_STEPS.length - 1}
+                  onClick={() => setSizeIndex(i => i + 1)}
+                  className="hover:bg-white/20"
+                >
                   <Plus className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => setVisible(false)} className="hover:bg-white/20">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setVisible(false)}
+                  className="hover:bg-white/20"
+                >
                   <X className="w-4 h-4" />
                 </Button>
               </div>
             </div>
+
 
             <div className="relative w-full pt-[56.25%] rounded-md overflow-hidden border border-white/10">
               {currentSong ? (

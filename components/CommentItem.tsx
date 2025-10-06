@@ -1,22 +1,34 @@
 "use client"
 
 import { useUserInfo } from "@/hooks/useUserInfo"
+import { useState } from "react"
+
+const MAX_DEPTH = 4
+const COLLAPSE_THRESHOLD = 3
 
 export function CommentItem({
   comment,
   postId,
   currentUser,
   onReplyRequest,
+  depth = 0
 }: {
   comment: any
   postId: string
   currentUser: { userId: string; username: string; avatar: string }
   onReplyRequest: (commentId: string, username: string) => void
+  depth?: number
 }) {
   const { userInfo } = useUserInfo(comment.userId)
+  const [showReplies, setShowReplies] = useState(true)
 
   return (
-    <div className="ml-2">
+    <div
+      className={`mt-2`}
+      style={{
+        marginLeft: `${Math.min(depth * 16, 64)}px` // max 64px indent
+      }}
+    >
       <div className="flex gap-3">
         <img
           src={userInfo?.avatar || "/avatars/default.png"}
@@ -29,7 +41,7 @@ export function CommentItem({
         />
         <div>
           <p className="text-sm font-semibold">{userInfo?.username || "Ẩn danh"}</p>
-          <p className="text-sm">{comment.content}</p>
+          <p className="text-sm whitespace-pre-line">{comment.content}</p>
           <p className="text-xs text-gray-400">
             {new Date(comment.createdAt).toLocaleString("vi-VN")}
           </p>
@@ -38,23 +50,35 @@ export function CommentItem({
             onClick={() => onReplyRequest(comment._id, userInfo?.username || "Ẩn danh")}
             className="text-xs text-blue-400 hover:text-blue-300 mt-1"
           >
-            Trả lời
+            Reply
           </button>
         </div>
       </div>
 
-      {/* render children (reply) đệ quy */}
-      {comment.children?.length > 0 && (
-        <div className="ml-6 mt-2 space-y-2">
-          {comment.children.map((reply: any) => (
-            <CommentItem
-              key={reply._id}
-              comment={reply}
-              postId={postId}
-              currentUser={currentUser}
-              onReplyRequest={onReplyRequest}
-            />
-          ))}
+      {/* Children comments */}
+      {comment.children?.length > 0 && depth < MAX_DEPTH && (
+        <div className="mt-2 space-y-2">
+          {/* Collapse button nếu có nhiều reply */}
+          {comment.children.length > COLLAPSE_THRESHOLD && (
+            <button
+              onClick={() => setShowReplies(!showReplies)}
+              className="text-xs text-blue-500 hover:underline ml-2"
+            >
+              {showReplies ? "Ẩn phản hồi" : `Hiện ${comment.children.length} phản hồi`}
+            </button>
+          )}
+
+          {showReplies &&
+            comment.children.map((reply: any) => (
+              <CommentItem
+                key={reply._id}
+                comment={reply}
+                postId={postId}
+                currentUser={currentUser}
+                onReplyRequest={onReplyRequest}
+                depth={depth + 1}
+              />
+            ))}
         </div>
       )}
     </div>

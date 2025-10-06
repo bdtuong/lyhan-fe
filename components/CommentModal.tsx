@@ -72,7 +72,7 @@ export function CommentModal({
       .then((data) => {
         setCurrentUser({
           userId: decoded.id,
-          username: data.username || "Bạn",
+          username: data.username || "You",
           avatar:
             Array.isArray(data.avatar) && data.avatar.length > 0
               ? data.avatar[0]
@@ -180,7 +180,7 @@ export function CommentModal({
   return (
     <div
       className="
-        fixed inset-0 z-50 flex items-center justify-center
+        fixed inset-0 z-[10000] flex items-center justify-center
         bg-black/60 backdrop-blur-sm
         overscroll-none
       "
@@ -203,7 +203,7 @@ export function CommentModal({
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/30 backdrop-blur-xl">
-          <h2 className="font-semibold text-base sm:text-lg">Bình luận</h2>
+          <h2 className="font-semibold text-base sm:text-lg">Comment</h2>
           <button
             onClick={onClose}
             className="inline-flex p-2 rounded-lg hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
@@ -257,7 +257,7 @@ export function CommentModal({
                 className="text-white/70 hover:text-white"
                 aria-label="Hủy trả lời"
               >
-                Hủy
+                Cancel
               </button>
             </div>
           )}
@@ -289,7 +289,7 @@ export function CommentModal({
               onClick={handleSend}
               className="shrink-0 bg-white/10 hover:bg-white/20 border border-white/10 text-white"
             >
-              Gửi
+              Send
             </Button>
           </div>
         </div>

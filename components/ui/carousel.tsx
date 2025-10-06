@@ -14,7 +14,7 @@ export interface CarouselItem {
 
 export interface CarouselProps {
   items?: CarouselItem[]
-  baseWidth?: number // fallback nếu không đo được
+  baseWidth?: number
   autoplay?: boolean
   autoplayDelay?: number
   pauseOnHover?: boolean
@@ -25,7 +25,6 @@ export interface CarouselProps {
 const DRAG_BUFFER = 0
 const VELOCITY_THRESHOLD = 500
 const GAP = 16
-
 const SPRING_OPTIONS: Transition = { type: "spring", stiffness: 300, damping: 30 }
 const RESET_OPTIONS: Transition = { duration: 0 }
 
@@ -56,7 +55,9 @@ export default function Carousel({
   const itemWidth = containerWidth - containerPadding * 2
   const trackItemOffset = itemWidth + GAP
 
-  const carouselItems = loop && items.length > 1 ? [...items, items[0]] : items
+  const enableLoop = loop && items.length > 2
+  const canDrag = items.length > 1
+  const carouselItems = enableLoop ? [...items, items[0]] : items
 
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const x = useMotionValue(0)
@@ -78,22 +79,22 @@ export default function Carousel({
   }, [pauseOnHover])
 
   useEffect(() => {
-    if (autoplay && (!pauseOnHover || !isHovered) && items.length > 0) {
+    if (autoplay && canDrag && (!pauseOnHover || !isHovered)) {
       const timer = setInterval(() => {
         setCurrentIndex((prev) => {
-          if (prev === items.length - 1 && loop && items.length > 1) return prev + 1
-          if (prev === carouselItems.length - 1) return loop ? 0 : prev
+          if (enableLoop && prev === items.length - 1) return prev + 1
+          if (prev === carouselItems.length - 1) return enableLoop ? 0 : prev
           return prev + 1
         })
       }, autoplayDelay)
       return () => clearInterval(timer)
     }
-  }, [autoplay, autoplayDelay, isHovered, loop, items.length, carouselItems.length, pauseOnHover])
+  }, [autoplay, autoplayDelay, isHovered, enableLoop, canDrag, items.length, carouselItems.length, pauseOnHover])
 
   const effectiveTransition: Transition = isResetting ? RESET_OPTIONS : SPRING_OPTIONS
 
   const handleAnimationComplete = () => {
-    if (loop && items.length > 1 && currentIndex === carouselItems.length - 1) {
+    if (enableLoop && currentIndex === carouselItems.length - 1) {
       setIsResetting(true)
       x.set(0)
       setCurrentIndex(0)
@@ -105,13 +106,13 @@ export default function Carousel({
     const offset = info.offset.x
     const velocity = info.velocity.x
     if (offset < -DRAG_BUFFER || velocity < -VELOCITY_THRESHOLD) {
-      if (loop && currentIndex === items.length - 1 && items.length > 1) {
+      if (enableLoop && currentIndex === items.length - 1) {
         setCurrentIndex(currentIndex + 1)
       } else {
         setCurrentIndex((prev) => Math.min(prev + 1, carouselItems.length - 1))
       }
     } else if (offset > DRAG_BUFFER || velocity > VELOCITY_THRESHOLD) {
-      if (loop && currentIndex === 0 && items.length > 1) {
+      if (enableLoop && currentIndex === 0) {
         setCurrentIndex(items.length - 1)
       } else {
         setCurrentIndex((prev) => Math.max(prev - 1, 0))
@@ -119,14 +120,15 @@ export default function Carousel({
     }
   }
 
-  const dragProps = loop
-    ? {}
-    : {
+  const dragProps = canDrag
+    ? {
+        drag: "x" as const,
         dragConstraints: {
           left: -trackItemOffset * (carouselItems.length - 1),
           right: 0
         }
       }
+    : {}
 
   return (
     <div
@@ -135,7 +137,6 @@ export default function Carousel({
     >
       <motion.div
         className="flex"
-        drag="x"
         {...dragProps}
         style={{
           minWidth: itemWidth,
@@ -201,9 +202,9 @@ export default function Carousel({
       </motion.div>
 
       {/* Pagination dots */}
-      {items.length > 0 && (
+      {items.length > 1 && (
         <div className="flex w-full justify-center mt-4">
-          <div className="flex max-w-[160px] justify-between px-8">
+          <div className="flex justify-center gap-4">
             {items.map((_, index) => (
               <motion.div
                 key={index}

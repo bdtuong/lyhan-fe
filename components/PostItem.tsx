@@ -45,7 +45,7 @@ export function PostItem({ post, actionsSlot }: Props) {
           }
         })
       },
-      { threshold: 0.75 }
+      { threshold: 0.5 }
     )
 
     observer.observe(video)
@@ -123,6 +123,7 @@ export function PostItem({ post, actionsSlot }: Props) {
                 src={post.video.url}
                 muted={isMuted}
                 controls={false}
+                loop
                 playsInline
                 className="w-full rounded-lg object-cover"
               />
