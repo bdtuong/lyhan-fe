@@ -222,7 +222,7 @@ export function FanSocialPage() {
           </div>
 
           <div ref={loaderRef} className="flex justify-center py-10">
-            {loadingMore && posts.length < total && <LyhanLoading size="lg" color="gray" />}
+            {loadingMore && posts.length < total && <LyhanLoading />}
             {posts.length >= total && <p className="text-neutral-400 text-sm">No more posts</p>}
           </div>
         </div>

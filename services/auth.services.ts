@@ -1,5 +1,6 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// 🟦 Login bằng email/password
 export async function login(email: string, password: string) {
   console.log("[AuthService] login payload:", { email, password });
 
@@ -22,6 +23,7 @@ export async function login(email: string, password: string) {
   return data; // { access_token }
 }
 
+// 🟦 Đăng ký tài khoản
 export async function register(username: string, email: string, password: string, confirmPassword: string) {
   console.log("[AuthService] register payload:", { username, email, password, confirmPassword });
 
@@ -44,8 +46,7 @@ export async function register(username: string, email: string, password: string
   return data; // { access_token }
 }
 
-
-// Lấy username + avatar
+// 🟦 Lấy user (username + avatar + ...) theo ID
 export async function getUser(userId: string, token: string) {
   const res = await fetch(`${API_URL}/v1/Auth/${userId}`, {
     headers: {
@@ -60,7 +61,7 @@ export async function getUser(userId: string, token: string) {
   return res.json(); // { username, avatar, ... }
 }
 
-// Chỉ lấy avatar
+// 🟦 Lấy avatar
 export async function getAvatar(userId: string, token: string) {
   const res = await fetch(`${API_URL}/v1/Auth/get-avatar/${userId}`, {
     headers: {
@@ -76,37 +77,32 @@ export async function getAvatar(userId: string, token: string) {
   return data.avatarUrl;
 }
 
-/**
- * Upload avatar cho user
- * @param userId string - id của user (Mongo _id)
- * @param file File - ảnh chọn từ input
- * @returns { avatarUrl: string }
- */
+// 🟦 Upload avatar
 export async function uploadAvatar(userId: string, file: File) {
-  const formData = new FormData()
-  formData.append("avatar", file)
+  const formData = new FormData();
+  formData.append("avatar", file);
 
   const res = await fetch(`${API_URL}/v1/Auth/avatar/${userId}`, {
     method: "PUT",
     body: formData,
-  })
+  });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.message || "Upload avatar thất bại")
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "Upload avatar thất bại");
   }
 
-  return res.json()
+  return res.json(); // { avatarUrl: string }
 }
 
-// Quên mật khẩu
+// 🟦 Quên mật khẩu
 export async function forgotPassword(email: string) {
   console.log("[AuthService] forgotPassword payload:", { Email: email });
 
   const res = await fetch(`${API_URL}/v1/Auth/forgot-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ Email: email }), // BE yêu cầu key là "Email"
+    body: JSON.stringify({ Email: email }),
   });
 
   console.log("[AuthService] forgotPassword status:", res.status);
@@ -119,10 +115,10 @@ export async function forgotPassword(email: string) {
 
   const data = await res.json();
   console.log("[AuthService] forgotPassword success response:", data);
-  return data; // { message: "Password reset email sent" }
+  return data; // { message }
 }
 
-// Reset mật khẩu (FE không cần gửi expires, BE tự check)
+// 🟦 Reset mật khẩu
 export async function resetPassword(
   token: string,
   email: string,
@@ -133,23 +129,27 @@ export async function resetPassword(
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password, confirmPassword }),
-  })
+  });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    // Nếu BE trả lỗi expired
+    const err = await res.json().catch(() => ({}));
     if (err.message?.includes("expired")) {
-      throw new Error("Liên kết đặt lại mật khẩu đã hết hạn. Vui lòng gửi lại yêu cầu quên mật khẩu.")
+      throw new Error("Liên kết đặt lại mật khẩu đã hết hạn. Vui lòng gửi lại yêu cầu.");
     }
-    throw new Error(err.message || "Đặt lại mật khẩu thất bại")
+    throw new Error(err.message || "Đặt lại mật khẩu thất bại");
   }
 
-  return res.json() // { message: "Password reset successfully" }
+  return res.json(); // { message }
 }
 
-
-// Đổi mật khẩu
-export async function changePassword(userId: string, oldPassword: string, newPassword: string, confirmNewPassword: string, token: string) {
+// 🟦 Đổi mật khẩu
+export async function changePassword(
+  userId: string,
+  oldPassword: string,
+  newPassword: string,
+  confirmNewPassword: string,
+  token: string
+) {
   const res = await fetch(`${API_URL}/v1/Auth/change-password/${userId}`, {
     method: "PUT",
     headers: {
@@ -167,7 +167,7 @@ export async function changePassword(userId: string, oldPassword: string, newPas
   return res.json();
 }
 
-// Đổi username
+// 🟦 Đổi username
 export async function changeUsername(userId: string, username: string, token: string) {
   const res = await fetch(`${API_URL}/v1/Auth/change-username/${userId}`, {
     method: "PUT",
@@ -186,10 +186,10 @@ export async function changeUsername(userId: string, username: string, token: st
   return res.json();
 }
 
-// Xóa shared post
+// 🟦 Xoá bài viết đã chia sẻ
 export async function deleteSharedPost(userId: string, postId: string, token: string) {
   const res = await fetch(`${API_URL}/v1/Auth/delete-sharedpost/${userId}/${postId}`, {
-    method: "PUT", // BE đang để PUT, giữ nguyên
+    method: "PUT",
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -201,4 +201,20 @@ export async function deleteSharedPost(userId: string, postId: string, token: st
   }
 
   return res.json(); // "Delete shared post successfully"
+}
+
+// 🟨 🆕 Login bằng Google (redirect)
+export function loginWithGoogleRedirect() {
+  window.location.href = `${API_URL}/v1/Auth/google`;
+}
+
+// 🟨 🆕 Lấy token từ URL sau khi Google redirect
+export function getTokenFromQuery(): string | null {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get("token");
+}
+
+// 🟨 🆕 Đăng xuất
+export function logout() {
+  localStorage.removeItem("access_token");
 }
