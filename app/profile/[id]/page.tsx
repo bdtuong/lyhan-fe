@@ -8,6 +8,8 @@ import { getUser, uploadAvatar } from "@/services/auth.services"
 import { getUserPosts, updatePost, deletePost } from "@/services/post.services"
 import { Lightbox, LightboxImage } from "@/components/lightbox"
 import { PostItem } from "@/components/PostItem"
+import { toast, Toaster } from "react-hot-toast"
+
 
 type Post = {
   _id: string
@@ -150,10 +152,12 @@ export default function ProfilePage() {
     try {
       const data = await uploadAvatar(profileId, file)
       setAvatarUrl(data.avatarUrl)
+      toast.success("Avatar updated successfully!")
     } catch {
-      alert("Unable to upload avatar")
+      toast.error("Unable to upload avatar")
     }
   }
+
 
   /** ========== Edit Post ========== */
   const startEdit = (post: Post) => {
@@ -241,6 +245,7 @@ export default function ProfilePage() {
 
   return (
     <div className="relative min-h-dvh text-white bg-black">
+      <Toaster position="top-center" />
       <main className="pt-24 pb-24 px-4 sm:px-6">
         {/* Container width similar to FanSocialPage */}
         <div className="mx-auto max-w-2xl space-y-8 lg:space-y-10">
