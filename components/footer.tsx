@@ -55,7 +55,6 @@ export function Footer() {
                 { href: "/music", label: "Music" },
                 { href: "/gallery", label: "Gallery" },
                 { href: "/events", label: "Events" },
-                { href: "/about", label: "About" },
               ].map(({ href, label }) => (
                 <Link
                   key={href}
@@ -77,21 +76,6 @@ export function Footer() {
             <p className="text-sm text-zinc-400 leading-relaxed">
               Never miss an update. Follow us on social media for the latest news and content.
             </p>
-          </div>
-        </div>
-
-        {/* Bottom line */}
-        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-zinc-500">
-            © {new Date().getFullYear()} Lyhan Fan Project. All rights reserved.
-          </p>
-          <div className="flex gap-6 text-xs text-zinc-500">
-            <Link href="/privacy" className="hover:text-white transition-colors">
-              Privacy
-            </Link>
-            <Link href="/terms" className="hover:text-white transition-colors">
-              Terms
-            </Link>
           </div>
         </div>
       </div>

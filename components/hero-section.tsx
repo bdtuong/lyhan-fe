@@ -1,11 +1,14 @@
 "use client"
 
+import { useAuth } from "@/context/AuthContext"
 import LightRays from "@/components/ui/light-rays"
 import ShinyText from "@/components/ui/shiny-text"
 import Link from "next/link"
 import LiquidGlass from "@/components/ui/liquid-glass"
 
 export function HeroSection() {
+  const { user } = useAuth()
+
   return (
     <section className="relative h-screen min-h-[80vh] w-full flex flex-col items-center justify-center px-4 sm:px-6 text-center overflow-hidden">
       {/* 🔆 LightRays background */}
@@ -37,10 +40,10 @@ export function HeroSection() {
 
         {/* CTA buttons */}
         <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
-          <Link href="/socials">
+          <Link href={user ? "/socials" : "/auth/login"}>
             <LiquidGlass className="px-5 py-2.5 sm:px-6 sm:py-3 rounded-full">
               <span className="text-white font-medium text-sm sm:text-base">
-                Get Started
+                {user ? "Go to Feed" : "Get Started"}
               </span>
             </LiquidGlass>
           </Link>
@@ -51,7 +54,10 @@ export function HeroSection() {
               target?.scrollIntoView({ behavior: "smooth" })
             }}
           >
-            <LiquidGlass className="px-5 py-2.5 sm:px-6 sm:py-3 rounded-full" overLight>
+            <LiquidGlass
+              className="px-5 py-2.5 sm:px-6 sm:py-3 rounded-full"
+              overLight
+            >
               <span className="text-white font-medium text-sm sm:text-base">
                 Learn More
               </span>

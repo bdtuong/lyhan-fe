@@ -22,7 +22,7 @@ const navItems = [
   { href: "/music", label: "Music", icon: Music },
   { href: "/gallery", label: "Gallery", icon: ImageIcon },
   { href: "/events", label: "Events", icon: Calendar },
-  { href: "/editor", label: "Custom", icon: Wand2 },
+  // { href: "/editor", label: "Custom", icon: Wand2 },
 ]
 
 export function Navigation() {
